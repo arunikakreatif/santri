@@ -313,6 +313,7 @@ export default function App() {
           <CetakPreview 
             rab={matchedRab}
             profil={profil}
+            initialDocType={navParam?.docType || "rab"}
             onBack={() => handleNavigate("arsip")}
           />
         );
@@ -380,20 +381,11 @@ export default function App() {
 
           {/* Kartu Identitas Lembaga Terverifikasi */}
           <div className="p-3 bg-white/5 rounded-xl border border-white/10 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gold flex items-center gap-1">
+            <div className="flex items-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gold flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{isDevMode ? "Mode Pengembang" : `Kode: ${activeTenant?.kode}`}</span>
+                <span>{isDevMode ? "Mode Pengembang" : `KODE: ${activeTenant?.kode}`}</span>
               </span>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-[10px] text-rose-300 hover:text-rose-100 flex items-center gap-1 hover:underline cursor-pointer bg-white/5 hover:bg-rose-500/20 px-2 py-0.5 rounded transition"
-                title="Keluar dari akun lembaga ini"
-              >
-                <LogOut className="w-3 h-3" />
-                <span>Keluar</span>
-              </button>
             </div>
 
             <div className="font-bold text-xs text-white leading-snug line-clamp-2" title={activeTenant?.namaLembaga || profil?.namaLembaga}>

@@ -17,7 +17,8 @@ import {
   DollarSign,
   AlertTriangle,
   X,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from "lucide-react";
 import { RABData } from "../types";
 
@@ -217,13 +218,22 @@ export default function ArsipRabView({
               {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100">
                 <button
-                  onClick={() => onNavigate("cetak", { previewTahun: rab.tahun })}
+                  onClick={() => onNavigate("cetak", { previewTahun: rab.tahun, docType: "rab" })}
                   className="inline-flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-900 active:bg-slate-950 text-white font-bold text-xs py-2 rounded-lg transition shadow-xs cursor-pointer"
-                  title="Lihat Preview & Cetak Laporan A4"
+                  title="Lihat Preview & Cetak Laporan RAB"
                   id={`btn-archive-print-${rab.tahun}`}
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  Lihat / Cetak
+                  Cetak RAB
+                </button>
+                <button
+                  onClick={() => onNavigate("cetak", { previewTahun: rab.tahun, docType: "lpp" })}
+                  className="inline-flex items-center justify-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:bg-emerald-900 text-white font-bold text-xs py-2 rounded-lg transition shadow-xs cursor-pointer"
+                  title="Lihat & Cetak Dokumen Laporan Program Pelaksanaan (LPP)"
+                  id={`btn-archive-lpp-${rab.tahun}`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  Cetak LPP
                 </button>
                 <button
                   onClick={() => onNavigate("susun", { editTahun: rab.tahun })}
@@ -243,14 +253,17 @@ export default function ArsipRabView({
                   <Copy className="w-3.5 h-3.5 text-slate-500" />
                   Salin Acuan
                 </button>
+              </div>
+
+              <div className="pt-2">
                 <button
                   onClick={() => openDeleteDialog(rab.tahun)}
-                  className="inline-flex items-center justify-center gap-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-100 text-rose-700 font-bold text-xs py-2 rounded-lg transition cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 text-[11px] font-semibold py-1.5 rounded-md transition cursor-pointer"
                   title="Hapus RAB Tahun Ini"
                   id={`btn-archive-delete-${rab.tahun}`}
                 >
                   <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                  Hapus
+                  Hapus Arsip Tahun {rab.tahun}
                 </button>
               </div>
 

@@ -3,27 +3,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { 
   Printer, 
   ArrowLeft, 
   Building,
-  Info
+  Info,
+  FileText,
+  CheckCircle
 } from "lucide-react";
 import { RABData, ProfilLembaga } from "../types";
 import { cleanKabupatenName } from "../services/db";
+import { formatLppKomponenNama, getCleanMadinName, getDesaOrAlamatSingkat } from "./belanja/LppTab";
 
 interface CetakPreviewProps {
   rab: RABData;
   profil: ProfilLembaga;
+  initialDocType?: "rab" | "lpp";
   onBack: () => void;
 }
 
 export default function CetakPreview({ 
   rab, 
   profil, 
+  initialDocType = "rab",
   onBack 
 }: CetakPreviewProps) {
+  const [activeDoc, setActiveDoc] = useState<"rab" | "lpp">(initialDocType);
 
   // Parse Kop Surat details based on the exact style in Gambar 1
   const cleanNamaLembaga = (profil.namaLembaga || 'MADRASAH DINIYAH "BAITURROHMAN"').trim();
@@ -535,9 +541,260 @@ export default function CetakPreview({
 </html>`;
   };
 
+  // Generate complete, pristine standalone HTML untuk LPP (Laporan Program Pelaksanaan)
+  const generatePrintableLppHtml = () => {
+    let rowsHtml = "";
+    const namaMadinLpp = getCleanMadinName(profil.namaLembaga);
+    const alamatMadinLpp = getDesaOrAlamatSingkat(profil);
+    const kecamatanMadinLpp = (profil.kecamatan || "PONCOL").replace(/^(kec\.?|kecamatan)\s+/i, "").trim().toUpperCase();
+    const kabupatenMadinLpp = cleanKabupatenName(profil.kabupaten || "MAGETAN").toUpperCase();
+    const signatureDateLpp = `${desaName}, ${dateStr}`;
+    const namaKepalaLpp = (profil.namaKepala || "SARNI BASORI").toUpperCase();
+
+    rab.komponenList.forEach((komponen, compIdx) => {
+      const compNo = compIdx + 1;
+      const compNama = formatLppKomponenNama(komponen.nama);
+      const items = komponen.items && komponen.items.length > 0 ? komponen.items : [{ id: `empty-${compIdx}`, uraian: "-", jumlah: 0, satuan: "", volume: 0, satuanVolume: "", satuanHarga: 0, total: 0 }];
+
+      items.forEach((item, itemIdx) => {
+        const isFirst = itemIdx === 0;
+        rowsHtml += `
+          <tr>
+            <td style="border: 1px solid #000; padding: 4px 4px; text-align: center; font-size: 8.5pt; font-weight: ${isFirst ? "bold" : "normal"}; vertical-align: middle;">
+              ${isFirst ? compNo : ""}
+            </td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; font-weight: ${isFirst ? "500" : "normal"}; vertical-align: middle;">
+              ${isFirst ? compNama : ""}
+            </td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;">
+              ${item.uraian}
+            </td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 8.5pt; vertical-align: middle;">
+              Tercapai
+            </td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;"></td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;"></td>
+          </tr>
+        `;
+      });
+    });
+
+    return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>printed by santri</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      color: #000000;
+      font-family: Arial, Helvetica, sans-serif !important;
+      font-size: 8.5pt;
+      line-height: 1.25;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .container {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 12mm 15mm 10mm 15mm;
+      margin: 0 auto;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .content-area {
+      flex: 1;
+    }
+    .header-lpp {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .header-lpp h1 {
+      font-size: 11.5pt;
+      font-weight: bold;
+      margin: 0 0 3px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .header-lpp h2 {
+      font-size: 10.5pt;
+      font-weight: bold;
+      margin: 0 0 3px 0;
+      text-transform: uppercase;
+    }
+    .header-lpp h3 {
+      font-size: 10.5pt;
+      font-weight: bold;
+      margin: 0;
+      text-transform: uppercase;
+    }
+    .meta-table {
+      margin-bottom: 12px;
+      font-size: 8.5pt;
+      font-weight: bold;
+      font-family: Arial, Helvetica, sans-serif !important;
+    }
+    .meta-table td {
+      padding: 1.5px 0;
+      vertical-align: top;
+    }
+    .meta-label { width: 130px; }
+    .meta-colon { width: 14px; text-align: center; }
+    .meta-value { text-transform: uppercase; }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-family: Arial, Helvetica, sans-serif !important;
+      font-size: 8.5pt;
+    }
+    table.data-table th {
+      border: 1.5px solid #000;
+      background-color: #f8fafc;
+      padding: 5px 4px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 8.5pt;
+    }
+    table.data-table td {
+      border: 1px solid #000;
+      padding: 4px 6px;
+    }
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    .signature-container {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .signature-box {
+      width: 250px;
+      text-align: center;
+      font-size: 8.5pt;
+      font-family: Arial, Helvetica, sans-serif !important;
+    }
+    .signature-date { margin-bottom: 3px; }
+    .signature-role { font-weight: normal; margin-bottom: 2px; }
+    .signature-madin { font-weight: normal; margin-bottom: 50px; }
+    .signature-name { font-weight: bold; text-decoration: none; text-transform: uppercase; }
+    .signature-nip { font-size: 8pt; margin-top: 2px; }
+    .footer-printed-by {
+      font-size: 8pt;
+      font-family: Arial, Helvetica, sans-serif !important;
+      color: #000000;
+      text-align: left;
+      margin-top: 12px;
+      padding-top: 4px;
+    }
+    @media print {
+      body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="content-area">
+      <div class="header-lpp">
+        <h1>LAPORAN PROGRAM PELAKSANAAN</h1>
+        <h2>PROGRAM BANTUAN PENYELENGGARAAN PENDIDIKAN DINIYAH DAN GURU SWASTA (BPPDGS)</h2>
+        <h3>TAHUN ${rab.tahun}</h3>
+      </div>
+
+      <table class="meta-table">
+        <tr>
+          <td class="meta-label">NAMA MADIN</td>
+          <td class="meta-colon">:</td>
+          <td class="meta-value">${namaMadinLpp}</td>
+        </tr>
+        <tr>
+          <td class="meta-label">ALAMAT</td>
+          <td class="meta-colon">:</td>
+          <td class="meta-value">${alamatMadinLpp}</td>
+        </tr>
+        <tr>
+          <td class="meta-label">KECAMATAN</td>
+          <td class="meta-colon">:</td>
+          <td class="meta-value">${kecamatanMadinLpp}</td>
+        </tr>
+        <tr>
+          <td class="meta-label">KABUPATEN</td>
+          <td class="meta-colon">:</td>
+          <td class="meta-value">${kabupatenMadinLpp}</td>
+        </tr>
+        <tr>
+          <td class="meta-label">BULAN</td>
+          <td class="meta-colon">:</td>
+          <td class="meta-value">JANUARI S/D DESEMBER</td>
+        </tr>
+      </table>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 32px;">No</th>
+            <th style="width: 170px;">Komponen Kegiatan</th>
+            <th>Rincian Kegiatan</th>
+            <th style="width: 85px;">Hasil yang dicapai</th>
+            <th style="width: 120px;">Permasalahn yang dihadapi</th>
+            <th style="width: 130px;">Upaya Pemecahan Masalah</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+
+      <div class="signature-container">
+        <div class="signature-box">
+          <div class="signature-date">${signatureDateLpp}</div>
+          <div class="signature-role">Mengetahui,</div>
+          <div class="signature-madin">Kepala MD ${namaMadinLpp}</div>
+          <div class="signature-name">${namaKepalaLpp}</div>
+          ${profil.nipKepala ? `<div class="signature-nip">NIP. ${profil.nipKepala}</div>` : ""}
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer 'printed by santri' menggantikan about:blank -->
+    <div class="footer-printed-by">
+      printed by santri
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        window.focus();
+        window.print();
+      }, 350);
+    });
+  </script>
+</body>
+</html>`;
+  };
+
   // Trigger Print dengan isolasi cetak sempurna (mendukung popup & iframe fallback)
   const handlePrint = () => {
-    const html = generatePrintableHtml();
+    const html = activeDoc === "lpp" ? generatePrintableLppHtml() : generatePrintableHtml();
 
     let printWindow: Window | null = null;
     try {
@@ -583,24 +840,50 @@ export default function CetakPreview({
   return (
     <div className="space-y-6" id="print-preview-container">
       {/* Action Bar (Hidden on Print) */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 print:hidden">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 transition cursor-pointer"
-          id="btn-print-back"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Kembali ke Arsip
-        </button>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 print:hidden">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-800 transition cursor-pointer"
+            id="btn-print-back"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Kembali ke Arsip
+          </button>
+
+          {/* Document Switcher Tab */}
+          <div className="flex items-center gap-1 bg-slate-200/80 p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setActiveDoc("rab")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                activeDoc === "rab" ? "bg-white text-emerald-800 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Dokumen 1: RAB</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveDoc("lpp")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                activeDoc === "lpp" ? "bg-white text-emerald-800 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              <CheckCircle className="w-3.5 h-3.5" />
+              <span>Dokumen 2: LPP (Program Pelaksanaan)</span>
+            </button>
+          </div>
+        </div>
         
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <button
             onClick={handlePrint}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-5 py-2.5 rounded-lg shadow-xs transition cursor-pointer"
+            className="w-full md:w-auto inline-flex items-center justify-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition cursor-pointer"
             id="btn-print-action"
           >
             <Printer className="w-4 h-4" />
-            Cetak Sekarang
+            <span>Cetak {activeDoc === "lpp" ? "LPP" : "RAB"} Sekarang</span>
           </button>
         </div>
       </div>
@@ -609,9 +892,11 @@ export default function CetakPreview({
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3 text-xs text-blue-800 print:hidden">
         <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
         <div>
-          <p className="font-bold">Panduan Mencetak / Menyimpan PDF Dokumen RAB:</p>
+          <p className="font-bold">
+            Panduan Mencetak / Menyimpan PDF {activeDoc === "lpp" ? "Dokumen Laporan Program Pelaksanaan (LPP)" : "Dokumen Rencana Anggaran Biaya (RAB)"}:
+          </p>
           <ul className="list-disc list-inside mt-1 space-y-1 text-blue-700/90 leading-relaxed">
-            <li>Klik tombol <strong>Cetak Sekarang</strong> untuk membuka jendela cetak resmi browser (A4 Portrait).</li>
+            <li>Klik tombol <strong>Cetak {activeDoc === "lpp" ? "LPP" : "RAB"} Sekarang</strong> untuk membuka jendela cetak resmi browser (A4 Portrait).</li>
             <li>Untuk menyimpannya sebagai berkas PDF resmi, pilih opsi <strong>Simpan sebagai PDF (Save as PDF)</strong> pada tujuan pencetakan.</li>
             <li>Pastikan mencentang opsi <strong>Cetak Gambar Latar (Print Background Graphics)</strong> di setelan tambahan agar garis dan warna tabel tetap tercetak presisi.</li>
           </ul>
@@ -713,161 +998,267 @@ export default function CetakPreview({
           }
         `}} />
 
-        {/* 1. KOP SURAT (PERSIS GAMBAR 1, FONT ARIAL) */}
-        <div 
-          className="relative w-full pb-1 flex items-center justify-center min-h-[95px]" 
-          id="kop-surat-header" 
-          style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
-        >
-          {/* Logo Lembaga di sisi kiri */}
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 shrink-0 flex items-center justify-center">
-            {profil.logo ? (
-              <img 
-                src={profil.logo} 
-                alt="Logo Lembaga" 
-                className="w-18 h-18 sm:w-20 sm:h-20 object-contain" 
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="w-18 h-18 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center border border-black shrink-0">
-                <Building className="w-9 h-9 sm:w-10 sm:h-10 text-black" />
+        {activeDoc === "rab" ? (
+          <>
+            {/* 1. KOP SURAT (PERSIS GAMBAR 1, FONT ARIAL) */}
+            <div 
+              className="relative w-full pb-1 flex items-center justify-center min-h-[95px]" 
+              id="kop-surat-header" 
+              style={{ fontFamily: "Arial, Helvetica, sans-serif" }}
+            >
+              {/* Logo Lembaga di sisi kiri */}
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 shrink-0 flex items-center justify-center">
+                {profil.logo ? (
+                  <img 
+                    src={profil.logo} 
+                    alt="Logo Lembaga" 
+                    className="w-18 h-18 sm:w-20 sm:h-20 object-contain" 
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-18 h-18 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center border border-black shrink-0">
+                    <Building className="w-9 h-9 sm:w-10 sm:h-10 text-black" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          
-          {/* Teks Kop Tengah Simetris (Persis Susunan Gambar 1) */}
-          <div className="w-full text-center px-18 sm:px-24 space-y-0.5">
-            <h2 className="text-[14px] sm:text-[16px] font-bold tracking-[0.22em] text-black uppercase leading-tight m-0 p-0">
-              {line1Text}
-            </h2>
-            <h1 className="text-lg sm:text-[23px] font-black tracking-normal text-black uppercase leading-tight my-0.5 p-0">
-              “ {line2Text} ”
-            </h1>
-            <p className="text-[11px] sm:text-[11.5px] font-bold text-black leading-tight m-0 p-0">
-              NSM : {profil.nsm || "311235200122"}
-            </p>
-            <p className="text-[11px] sm:text-[11.5px] font-bold text-black uppercase leading-tight mt-0.5 tracking-wider p-0">
-              {line4Text}
-            </p>
-            <p className="text-[9.5px] sm:text-[10.5px] font-normal text-black mt-0.5 leading-normal m-0 p-0">
-              {line5Text}
-            </p>
-          </div>
-        </div>
+              
+              {/* Teks Kop Tengah Simetris (Persis Susunan Gambar 1) */}
+              <div className="w-full text-center px-18 sm:px-24 space-y-0.5">
+                <h2 className="text-[14px] sm:text-[16px] font-bold tracking-[0.22em] text-black uppercase leading-tight m-0 p-0">
+                  {line1Text}
+                </h2>
+                <h1 className="text-lg sm:text-[23px] font-black tracking-normal text-black uppercase leading-tight my-0.5 p-0">
+                  “ {line2Text} ”
+                </h1>
+                <p className="text-[11px] sm:text-[11.5px] font-bold text-black leading-tight m-0 p-0">
+                  NSM : {profil.nsm || "311235200122"}
+                </p>
+                <p className="text-[11px] sm:text-[11.5px] font-bold text-black uppercase leading-tight mt-0.5 tracking-wider p-0">
+                  {line4Text}
+                </p>
+                <p className="text-[9.5px] sm:text-[10.5px] font-normal text-black mt-0.5 leading-normal m-0 p-0">
+                  {line5Text}
+                </p>
+              </div>
+            </div>
 
-        {/* DOUBLE HORIZONTAL LINE (GARIS KOP TEBAL-TIPIS SESUAI GAMBAR 1) */}
-        <div className="w-full flex flex-col gap-[2px] mt-1 mb-4" id="kop-double-line">
-          <div className="h-[3px] bg-black w-full" />
-          <div className="h-[1px] bg-black w-full" />
-        </div>
+            {/* DOUBLE HORIZONTAL LINE (GARIS KOP TEBAL-TIPIS SESUAI GAMBAR 1) */}
+            <div className="w-full flex flex-col gap-[2px] mt-1 mb-4" id="kop-double-line">
+              <div className="h-[3px] bg-black w-full" />
+              <div className="h-[1px] bg-black w-full" />
+            </div>
 
-        {/* 2. JUDUL DOKUMEN */}
-        <div className="text-center space-y-0.5 mb-4" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
-          <h1 className="text-base font-black tracking-tight text-black uppercase">
-            RENCANA ANGGARAN BIAYA (RAB)
-          </h1>
-          <h2 className="text-xs font-bold text-black uppercase">
-            DANA HIBAH BPPDGS TAHUN ANGGARAN {rab.tahun}
-          </h2>
-          <div className="text-[11px] font-bold text-black uppercase">
-            SUMBER DANA: {rab.sumberDana}
-          </div>
-        </div>
+            {/* 2. JUDUL DOKUMEN */}
+            <div className="text-center space-y-0.5 mb-4" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+              <h1 className="text-base font-black tracking-tight text-black uppercase">
+                RENCANA ANGGARAN BIAYA (RAB)
+              </h1>
+              <h2 className="text-xs font-bold text-black uppercase">
+                DANA HIBAH BPPDGS TAHUN ANGGARAN {rab.tahun}
+              </h2>
+              <div className="text-[11px] font-bold text-black uppercase">
+                SUMBER DANA: {rab.sumberDana}
+              </div>
+            </div>
 
-        {/* 3. TABEL DATA UTAMA (TIDAK TERLALU RENGGANG, SESUAI TEKS ISI) */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse border border-black text-xs text-black" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
-            <thead>
-              <tr className="bg-slate-100/60 text-black">
-                <th className="border border-black px-1.5 py-1 text-center font-bold w-9">No</th>
-                <th className="border border-black px-2 py-1 text-center font-bold">Uraian Kegiatan</th>
-                <th className="border border-black px-1.5 py-1 text-center font-bold w-14">Volume</th>
-                <th className="border border-black px-1.5 py-1 text-center font-bold w-18">Satuan</th>
-                <th className="border border-black px-2 py-1 text-center font-bold w-24">Harga Satuan (Rp)</th>
-                <th className="border border-black px-2 py-1 text-center font-bold w-28">Jumlah Biaya (Rp)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rab.komponenList.map((komponen, compIdx) => {
-                const compNo = compIdx + 1;
+            {/* 3. TABEL DATA UTAMA (TIDAK TERLALU RENGGANG, SESUAI TEKS ISI) */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse border border-black text-xs text-black" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+                <thead>
+                  <tr className="bg-slate-100/60 text-black">
+                    <th className="border border-black px-1.5 py-1 text-center font-bold w-9">No</th>
+                    <th className="border border-black px-2 py-1 text-center font-bold">Uraian Kegiatan</th>
+                    <th className="border border-black px-1.5 py-1 text-center font-bold w-14">Volume</th>
+                    <th className="border border-black px-1.5 py-1 text-center font-bold w-18">Satuan</th>
+                    <th className="border border-black px-2 py-1 text-center font-bold w-24">Harga Satuan (Rp)</th>
+                    <th className="border border-black px-2 py-1 text-center font-bold w-28">Jumlah Biaya (Rp)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rab.komponenList.map((komponen, compIdx) => {
+                    const compNo = compIdx + 1;
 
-                return (
-                  <React.Fragment key={komponen.nama}>
-                    {/* Header Komponen Row */}
-                    <tr className="font-bold text-black bg-slate-50/70">
-                      <td className="border border-black px-1.5 py-0.5 text-center">{compNo}</td>
-                      <td className="border border-black px-2 py-0.5 uppercase font-bold" colSpan={5}>
-                        {komponen.nama}
-                      </td>
-                    </tr>
-
-                    {/* Sub-item Rows */}
-                    {komponen.items.map((item, itemIdx) => {
-                      const computedVolume = item.jumlah * item.volume;
-                      const displaySatuan = item.satuanVolume && item.satuanVolume.trim() !== ""
-                        ? `${item.satuan}/${item.satuanVolume}`
-                        : item.satuan;
-
-                      return (
-                        <tr key={item.id} className="hover:bg-slate-50/40">
-                          <td className="border border-black px-1.5 py-0.5 text-center text-black font-medium">
-                            {getAlphabetLabel(itemIdx)}.
-                          </td>
-                          <td className="border border-black px-2 py-0.5 pl-3 text-black text-[11px]">
-                            {item.uraian}
-                          </td>
-                          <td className="border border-black px-1.5 py-0.5 text-center text-black">
-                            {computedVolume}
-                          </td>
-                          <td className="border border-black px-1.5 py-0.5 text-center text-black">
-                            {displaySatuan}
-                          </td>
-                          <td className="border border-black px-2 py-0.5 text-right text-black">
-                            {formatIDR(item.satuanHarga).replace("Rp", "").trim()}
-                          </td>
-                          <td className="border border-black px-2 py-0.5 text-right font-bold text-black">
-                            {formatIDR(item.total).replace("Rp", "").trim()}
+                    return (
+                      <React.Fragment key={komponen.nama}>
+                        {/* Header Komponen Row */}
+                        <tr className="font-bold text-black bg-slate-50/70">
+                          <td className="border border-black px-1.5 py-0.5 text-center">{compNo}</td>
+                          <td className="border border-black px-2 py-0.5 uppercase font-bold" colSpan={5}>
+                            {komponen.nama}
                           </td>
                         </tr>
-                      );
-                    })}
 
-                  </React.Fragment>
-                );
-              })}
+                        {/* Sub-item Rows */}
+                        {komponen.items.map((item, itemIdx) => {
+                          const computedVolume = item.jumlah * item.volume;
+                          const displaySatuan = item.satuanVolume && item.satuanVolume.trim() !== ""
+                            ? `${item.satuan}/${item.satuanVolume}`
+                            : item.satuan;
 
-              {/* Total Row */}
-              <tr className="font-bold text-black text-xs bg-slate-100/60">
-                <td className="border border-black px-2 py-1.5 text-center" colSpan={2}>
-                  TOTAL ANGGARAN KESELURUHAN (RAB)
-                </td>
-                <td className="border border-black px-2 py-1.5 text-right font-bold text-xs text-black" colSpan={4}>
-                  {formatIDR(rab.totalAnggaran)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                          return (
+                            <tr key={item.id} className="hover:bg-slate-50/40">
+                              <td className="border border-black px-1.5 py-0.5 text-center text-black font-medium">
+                                {getAlphabetLabel(itemIdx)}.
+                              </td>
+                              <td className="border border-black px-2 py-0.5 pl-3 text-black text-[11px]">
+                                {item.uraian}
+                              </td>
+                              <td className="border border-black px-1.5 py-0.5 text-center text-black">
+                                {computedVolume}
+                              </td>
+                              <td className="border border-black px-1.5 py-0.5 text-center text-black">
+                                {displaySatuan}
+                              </td>
+                              <td className="border border-black px-2 py-0.5 text-right text-black">
+                                {formatIDR(item.satuanHarga).replace("Rp", "").trim()}
+                              </td>
+                              <td className="border border-black px-2 py-0.5 text-right font-bold text-black">
+                                {formatIDR(item.total).replace("Rp", "").trim()}
+                              </td>
+                            </tr>
+                          );
+                        })}
 
-        {/* 4. TANDA TANGAN (SIGNATURE BLOCK) */}
-        <div className="mt-8 flex justify-end page-break-avoid" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
-          <div className="w-[7.5cm] text-center space-y-12">
-            <div className="space-y-1">
-              <p className="text-xs text-black">
-                {signaturePlaceDate}
-              </p>
-              <p className="font-bold text-black uppercase leading-tight text-xs">
-                Kepala Madrasah Diniyah
-              </p>
+                      </React.Fragment>
+                    );
+                  })}
+
+                  {/* Total Row */}
+                  <tr className="font-bold text-black text-xs bg-slate-100/60">
+                    <td className="border border-black px-2 py-1.5 text-center" colSpan={2}>
+                      TOTAL ANGGARAN KESELURUHAN (RAB)
+                    </td>
+                    <td className="border border-black px-2 py-1.5 text-right font-bold text-xs text-black" colSpan={4}>
+                      {formatIDR(rab.totalAnggaran)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            
-            <div className="space-y-0.5">
-              <p className="font-bold text-black underline uppercase text-xs">
-                {profil.namaKepala || "KH. MUHAMMAD SYAFII, S.Pd.I."}
-              </p>
+
+            {/* 4. TANDA TANGAN (SIGNATURE BLOCK) */}
+            <div className="mt-8 flex justify-end page-break-avoid" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+              <div className="w-[7.5cm] text-center space-y-12">
+                <div className="space-y-1">
+                  <p className="text-xs text-black">
+                    {signaturePlaceDate}
+                  </p>
+                  <p className="font-bold text-black uppercase leading-tight text-xs">
+                    Kepala Madrasah Diniyah
+                  </p>
+                </div>
+                
+                <div className="space-y-0.5">
+                  <p className="font-bold text-black underline uppercase text-xs">
+                    {profil.namaKepala || "KH. MUHAMMAD SYAFII, S.Pd.I."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-6 text-black" style={{ fontFamily: "Arial, Helvetica, sans-serif" }}>
+            {/* 1. JUDUL LAPORAN LPP */}
+            <div className="text-center space-y-0.5">
+              <h1 className="text-sm sm:text-base font-bold text-black uppercase tracking-tight">
+                LAPORAN PROGRAM PELAKSANAAN
+              </h1>
+              <h2 className="text-xs sm:text-sm font-bold text-black uppercase">
+                PROGRAM BANTUAN PENYELENGGARAAN PENDIDIKAN DINIYAH DAN GURU SWASTA (BPPDGS)
+              </h2>
+              <h3 className="text-xs sm:text-sm font-bold text-black uppercase">
+                TAHUN {rab.tahun}
+              </h3>
+            </div>
+
+            {/* 2. METADATA LEMBAGA */}
+            <div className="text-xs font-bold leading-relaxed space-y-0.5 text-black">
+              <div className="flex">
+                <span className="w-36">NAMA MADIN</span>
+                <span className="w-4 text-center">:</span>
+                <span className="uppercase">{getCleanMadinName(profil.namaLembaga)}</span>
+              </div>
+              <div className="flex">
+                <span className="w-36">ALAMAT</span>
+                <span className="w-4 text-center">:</span>
+                <span className="uppercase">{getDesaOrAlamatSingkat(profil)}</span>
+              </div>
+              <div className="flex">
+                <span className="w-36">KECAMATAN</span>
+                <span className="w-4 text-center">:</span>
+                <span className="uppercase">{(profil.kecamatan || "PONCOL").replace(/^(kec\.?|kecamatan)\s+/i, "").trim().toUpperCase()}</span>
+              </div>
+              <div className="flex">
+                <span className="w-36">KABUPATEN</span>
+                <span className="w-4 text-center">:</span>
+                <span className="uppercase">{cleanKabupatenName(profil.kabupaten || "MAGETAN").toUpperCase()}</span>
+              </div>
+              <div className="flex">
+                <span className="w-36">BULAN</span>
+                <span className="w-4 text-center">:</span>
+                <span className="uppercase">JANUARI S/D DESEMBER</span>
+              </div>
+            </div>
+
+            {/* 3. TABEL DATA LPP */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-black text-[11px] sm:text-xs text-black">
+                <thead>
+                  <tr className="bg-slate-50 font-bold text-center">
+                    <th className="border border-black px-1.5 py-1.5 w-9">No</th>
+                    <th className="border border-black px-2 py-1.5 w-44 text-center">Komponen Kegiatan</th>
+                    <th className="border border-black px-2 py-1.5 text-center">Rincian Kegiatan</th>
+                    <th className="border border-black px-1.5 py-1.5 w-24 text-center">Hasil yang dicapai</th>
+                    <th className="border border-black px-2 py-1.5 w-36 text-center">Permasalahn yang dihadapi</th>
+                    <th className="border border-black px-2 py-1.5 w-36 text-center">Upaya Pemecahan Masalah</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rab.komponenList.map((komponen, compIdx) => {
+                    const compNo = compIdx + 1;
+                    const compNama = formatLppKomponenNama(komponen.nama);
+                    const items = komponen.items && komponen.items.length > 0 ? komponen.items : [{ id: `empty-${compIdx}`, uraian: "-", jumlah: 0, satuan: "", volume: 0, satuanVolume: "", satuanHarga: 0, total: 0 }];
+
+                    return items.map((item, itemIdx) => {
+                      const isFirst = itemIdx === 0;
+                      return (
+                        <tr key={`${compIdx}-${item.id || itemIdx}`}>
+                          <td className={`border border-black px-1.5 py-1 text-center ${isFirst ? "font-bold" : ""}`}>
+                            {isFirst ? compNo : ""}
+                          </td>
+                          <td className={`border border-black px-2 py-1 text-left ${isFirst ? "font-medium" : ""}`}>
+                            {isFirst ? compNama : ""}
+                          </td>
+                          <td className="border border-black px-2 py-1 text-left">
+                            {item.uraian}
+                          </td>
+                          <td className="border border-black px-1.5 py-1 text-center">
+                            Tercapai
+                          </td>
+                          <td className="border border-black px-2 py-1 text-left"></td>
+                          <td className="border border-black px-2 py-1 text-left"></td>
+                        </tr>
+                      );
+                    });
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 4. TANDA TANGAN LPP */}
+            <div className="mt-8 flex justify-end page-break-avoid text-xs text-black">
+              <div className="w-64 text-center space-y-0.5">
+                <div>{signaturePlaceDate}</div>
+                <div>Mengetahui,</div>
+                <div className="mb-14">Kepala MD {getCleanMadinName(profil.namaLembaga)}</div>
+                <div className="font-bold uppercase">{profil.namaKepala || "SARNI BASORI"}</div>
+                {profil.nipKepala && (
+                  <div className="text-[10px] text-slate-700">NIP. {profil.nipKepala}</div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 5. FOOTER 'printed by santri' PENGGANTI about:blank */}
         <div 

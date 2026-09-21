@@ -13,7 +13,8 @@ import {
   BarChart3, 
   Calendar,
   Building2,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from "lucide-react";
 import { 
   ProfilLembaga, 
@@ -33,6 +34,7 @@ import PenerimaanDanaTab from "./PenerimaanDanaTab";
 import KwitansiTab from "./KwitansiTab";
 import BkpTab from "./BkpTab";
 import BkuTab from "./BkuTab";
+import LppTab from "./LppTab";
 import MonitoringAnggaranTab from "./MonitoringAnggaranTab";
 
 interface MenuBelanjaViewProps {
@@ -114,6 +116,7 @@ export default function MenuBelanjaView({
     { id: "kwitansi", label: "Kwitansi Belanja", icon: Receipt, count: kwitansiList.length },
     { id: "bkp", label: "Buku Kas Pembantu", icon: FileSpreadsheet },
     { id: "bku", label: "Buku Kas Umum", icon: Wallet },
+    { id: "lpp", label: "Laporan Pelaksanaan (LPP)", icon: FileText, count: activeRab?.komponenList?.reduce((acc, c) => acc + (c.items ? c.items.length : 0), 0) || 0 },
     { id: "monitoring", label: "Monitoring Anggaran RAB", icon: BarChart3, count: rabItemsWithBudget.length },
   ];
 
@@ -255,6 +258,15 @@ export default function MenuBelanjaView({
           <BkuTab
             profil={profil}
             tahun={selectedTahun}
+          />
+        )}
+
+        {activeSubTab === "lpp" && (
+          <LppTab
+            profil={profil}
+            rab={activeRab}
+            tahun={selectedTahun}
+            onNavigateToRab={() => onNavigate("susun", { editTahun: selectedTahun })}
           />
         )}
 
