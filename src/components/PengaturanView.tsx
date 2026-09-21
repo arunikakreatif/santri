@@ -310,82 +310,111 @@ export default function PengaturanView({
   };
 
   return (
-    <div className="space-y-4 pb-4" id="settings-view-container">
+    <div className="space-y-3" id="settings-view-container">
       {/* Top Header & Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 pb-2.5 border-b border-slate-200/80">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            <Building className="w-5 h-5 md:w-6 md:h-6 text-brand-green" />
+          <h1 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <Building className="w-5 h-5 text-brand-green" />
             Pengaturan Lembaga &amp; Sistem
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Kelola data legalitas madrasah, pejabat penandatangan SPJ, dan sinkronisasi database Google Sheets.
+            Kelola legalitas madrasah, kop surat resmi, pejabat penandatangan, dan titimangsa dokumen SPJ.
           </p>
         </div>
 
-        {/* Action button in header to quickly sync if connected */}
-        {isConnected && (
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {/* Status Sinkronisasi Terhubung */}
+          <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-1.5 rounded-lg text-xs font-semibold shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Spreadsheet Terdaftar</span>
+          </div>
+
+          {isConnected && (
+            <button
+              type="button"
+              onClick={handleSyncFromSheets}
+              disabled={syncingSheets}
+              className="inline-flex items-center gap-1.5 bg-white hover:bg-emerald-50 text-emerald-800 font-semibold px-3 py-1.5 rounded-lg border border-emerald-300 text-xs transition cursor-pointer shadow-2xs disabled:opacity-50"
+              title="Tarik data profil madrasah langsung dari Google Spreadsheet"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-emerald-700 ${syncingSheets ? "animate-spin" : ""}`} />
+              <span>{syncingSheets ? "Menarik..." : "Tarik dari Spreadsheet"}</span>
+            </button>
+          )}
+
           <button
-            type="button"
-            onClick={handleSyncFromSheets}
-            disabled={syncingSheets}
-            className="self-start sm:self-auto inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold px-3 py-1.5 rounded-lg border border-emerald-200/80 text-xs transition cursor-pointer shadow-2xs disabled:opacity-50"
-            title="Tarik data profil madrasah langsung dari Google Spreadsheet"
+            type="submit"
+            form="form-pengaturan-lembaga"
+            disabled={savingProfil}
+            className="inline-flex items-center gap-1.5 bg-brand-green hover:bg-brand-green-dark text-white font-bold px-4 py-1.5 rounded-lg text-xs transition cursor-pointer shadow-2xs disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-emerald-700 ${syncingSheets ? "animate-spin" : ""}`} />
-            <span>{syncingSheets ? "Menarik Data..." : "Tarik dari Spreadsheet"}</span>
+            {savingProfil ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Menyimpan...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-3.5 h-3.5 text-brand-gold" />
+                <span>Simpan Pengaturan</span>
+              </>
+            )}
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Modern Tabs Navigation */}
-      <div className="flex border-b border-slate-200 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setActiveTab("profil")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap ${
-            activeTab === "profil"
-              ? "border-brand-green text-brand-green bg-emerald-50/40"
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-          }`}
-        >
-          <Building className="w-4 h-4" />
-          <span>Profil Lembaga &amp; Dokumen</span>
-        </button>
+      {/* Modern Tabs Navigation - HANYA MUNCUL DI MODE PENGEMBANG */}
+      {unlockedDevTab ? (
+        <div className="flex items-center justify-between border-b border-slate-200 overflow-x-auto text-xs pb-1">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("profil")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition cursor-pointer whitespace-nowrap ${
+                activeTab === "profil"
+                  ? "bg-brand-green text-white shadow-2xs"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <Building className="w-3.5 h-3.5" />
+              <span>Profil Lembaga</span>
+            </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("database")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap ${
-            activeTab === "database"
-              ? "border-brand-green text-brand-green bg-emerald-50/40"
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-          }`}
-        >
-          <Database className="w-4 h-4" />
-          <span>Integrasi Google Sheets</span>
-          <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500" : "bg-amber-400"}`} />
-        </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("database")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition cursor-pointer whitespace-nowrap ${
+                activeTab === "database"
+                  ? "bg-brand-green text-white shadow-2xs"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span>Integrasi Google Sheets (Dev)</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-emerald-400" : "bg-amber-400"}`} />
+            </button>
 
-        {unlockedDevTab && (
-          <button
-            type="button"
-            onClick={() => setActiveTab("multitenant")}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap ${
-              activeTab === "multitenant"
-                ? "border-brand-green text-brand-green bg-emerald-50/40"
-                : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-            }`}
-          >
-            <Layers className="w-4 h-4 text-indigo-600" />
-            <span>Master Multi-Tenant (Pengembang)</span>
-            {masterUrl && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-          </button>
-        )}
-      </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("multitenant")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 font-bold rounded-lg transition cursor-pointer whitespace-nowrap ${
+                activeTab === "multitenant"
+                  ? "bg-indigo-700 text-white shadow-2xs"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-indigo-200" />
+              <span>Master Multi-Tenant</span>
+            </button>
+          </div>
 
-      {!unlockedDevTab && (
-        <div className="flex justify-end pt-1">
+          <span className="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+            Developer Mode Active
+          </span>
+        </div>
+      ) : (
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={() => {
@@ -397,7 +426,7 @@ export default function PengaturanView({
                 alert("PIN Pengembang salah.");
               }
             }}
-            className="text-[11px] text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition cursor-pointer"
+            className="text-[10.5px] text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition cursor-pointer"
           >
             <Layers className="w-3 h-3" />
             <span>Mode Pengembang Master Registry</span>
@@ -407,7 +436,7 @@ export default function PengaturanView({
 
       {/* Sync Feedback Toast */}
       {syncMessage && (
-        <div className={`p-3 rounded-lg border text-xs flex items-center gap-2 transition-all ${
+        <div className={`p-2.5 rounded-lg border text-xs flex items-center gap-2 transition-all ${
           syncMessage.success ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-800"
         }`}>
           {syncMessage.success ? <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" /> : <XCircle className="w-4 h-4 text-rose-600 shrink-0" />}
@@ -416,273 +445,264 @@ export default function PengaturanView({
       )}
 
       {/* Main Settings Form */}
-      <form onSubmit={handleSaveAll} className="space-y-4">
+      <form id="form-pengaturan-lembaga" onSubmit={handleSaveAll} className="space-y-3">
 
-        {/* TAB 1: PROFIL LEMBAGA & PEJABAT */}
+        {/* TAB 1: PROFIL LEMBAGA & PEJABAT (TAMPILAN COMPACT 2-KOLOM TANPA SCROLL) */}
         {activeTab === "profil" && (
-          <div className="space-y-4 animate-in fade-in duration-150">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-start animate-in fade-in duration-150">
             
-            {/* Card 1: Identitas Madrasah & Logo */}
-            <div className="bg-white rounded-xl border border-slate-200/80 p-4 md:p-5 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-                <span className="p-1.5 bg-emerald-50 text-emerald-700 rounded-md">
-                  <Building className="w-4 h-4" />
-                </span>
-                <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Identitas Madrasah Diniyah</h2>
-                  <p className="text-[11px] text-slate-500">Informasi utama lembaga yang dicetak pada bagian kop surat dokumen resmi.</p>
+            {/* ==================== KOLOM KIRI (5/12): IDENTITAS & PEJABAT ==================== */}
+            <div className="lg:col-span-5 space-y-3">
+              
+              {/* Card 1: Identitas Madrasah & Logo */}
+              <div className="bg-white rounded-xl border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1 bg-emerald-50 text-emerald-700 rounded-md">
+                      <Building className="w-3.5 h-3.5" />
+                    </span>
+                    <h2 className="font-bold text-slate-800 text-xs">Identitas Madrasah Diniyah</h2>
+                  </div>
+                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Kop Resmi
+                  </span>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-                
-                {/* Logo Lembaga Section */}
-                <div className="md:col-span-1 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200/70 flex flex-col items-center text-center space-y-2.5">
-                  <span className="text-xs font-bold text-slate-700">Logo Lembaga</span>
-                  <div className="relative flex items-center justify-center bg-white border border-slate-200 rounded-xl w-24 h-24 p-1.5 overflow-hidden shadow-2xs">
-                    {logo ? (
-                      <img src={logo} alt="Logo Madrasah" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className="text-slate-400 flex flex-col items-center justify-center gap-1">
-                        <ImageIcon className="w-8 h-8 text-slate-300" />
-                        <span className="text-[10px] text-slate-400">Belum Ada Logo</span>
+                <div className="flex items-start gap-3">
+                  {/* Logo Box Compact */}
+                  <div className="flex flex-col items-center shrink-0 w-20">
+                    <div className="relative flex items-center justify-center bg-white border border-slate-200 rounded-lg w-20 h-20 p-1 overflow-hidden shadow-2xs">
+                      {logo ? (
+                        <img src={logo} alt="Logo Madrasah" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                      ) : (
+                        <div className="text-slate-400 flex flex-col items-center justify-center gap-0.5">
+                          <ImageIcon className="w-6 h-6 text-slate-300" />
+                          <span className="text-[8.5px] text-slate-400 text-center leading-tight">No Logo</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1 mt-1.5 w-full">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-1 rounded text-[10px] text-center border border-slate-200 cursor-pointer"
+                        title="Upload Logo"
+                      >
+                        Upload
+                      </button>
+                      {logo && (
+                        <button
+                          type="button"
+                          onClick={removeLogo}
+                          className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-1.5 py-1 rounded text-[10px] border border-rose-200 cursor-pointer"
+                          title="Hapus Logo"
+                        >
+                          <Trash className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowUrlLogoInput(!showUrlLogoInput)}
+                      className="text-[9.5px] text-brand-green font-medium hover:underline mt-1"
+                    >
+                      {showUrlLogoInput ? "Tutup URL" : "Via URL"}
+                    </button>
+
+                    <input 
+                      ref={fileInputRef}
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleLogoUpload} 
+                      className="hidden" 
+                    />
+                  </div>
+
+                  {/* Form Nama & NSM */}
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+                        Nama Lembaga Madrasah
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={namaLembaga}
+                        onChange={(e) => setNamaLembaga(e.target.value)}
+                        placeholder="Contoh: MADRASAH DINIYAH &quot;BAITURROHMAN&quot;"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs font-bold text-slate-800 bg-slate-50/50 focus:bg-white transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+                        Nomor Statistik Madrasah (NSM)
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={nsm}
+                        onChange={(e) => setNsm(e.target.value)}
+                        placeholder="Contoh: 311235120145"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs font-mono text-slate-800 bg-slate-50/50 focus:bg-white transition"
+                      />
+                    </div>
+
+                    {showUrlLogoInput && (
+                      <div>
+                        <input
+                          type="url"
+                          value={logo && logo.startsWith("data:") ? "" : logo}
+                          onChange={(e) => setLogo(e.target.value)}
+                          placeholder="URL Logo (https://...)"
+                          className="w-full px-2 py-1 rounded border border-slate-200 text-[10px] font-mono outline-none focus:border-emerald-500"
+                        />
                       </div>
                     )}
                   </div>
-
-                  <div className="flex flex-wrap items-center justify-center gap-1.5 w-full">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 font-semibold px-2.5 py-1 rounded-md border border-slate-300 text-xs shadow-2xs cursor-pointer"
-                    >
-                      <Upload className="w-3 h-3 text-slate-500" />
-                      Pilih File
-                    </button>
-                    {logo && (
-                      <button
-                        type="button"
-                        onClick={removeLogo}
-                        className="inline-flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold px-2 py-1 rounded-md border border-rose-200 text-xs cursor-pointer"
-                        title="Hapus Logo"
-                      >
-                        <Trash className="w-3 h-3" />
-                        Hapus
-                      </button>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowUrlLogoInput(!showUrlLogoInput)}
-                    className="text-[11px] text-brand-green font-medium hover:underline inline-flex items-center gap-1"
-                  >
-                    <Link className="w-3 h-3" />
-                    {showUrlLogoInput ? "Tutup URL Logo" : "Gunakan Tautan/URL"}
-                  </button>
-
-                  {showUrlLogoInput && (
-                    <input
-                      type="url"
-                      value={logo && logo.startsWith("data:") ? "" : logo}
-                      onChange={(e) => setLogo(e.target.value)}
-                      placeholder="https://.../logo.png"
-                      className="w-full px-2.5 py-1 rounded-md border border-slate-200 text-xs outline-none focus:border-emerald-500 bg-white shadow-2xs font-mono"
-                    />
-                  )}
-
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    onChange={handleLogoUpload} 
-                    className="hidden" 
-                  />
-                  <p className="text-[10px] text-slate-400 leading-tight">Format PNG/JPG, maks 2MB</p>
                 </div>
 
-                {/* Nama & NSM */}
-                <div className="md:col-span-2 space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                      Nama Lembaga Madrasah Diniyah
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={namaLembaga}
-                      onChange={(e) => setNamaLembaga(e.target.value)}
-                      placeholder="Contoh: MADRASAH DINIYAH &quot;BAITURROHMAN&quot;"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs md:text-sm shadow-2xs transition font-semibold"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                      Nomor Statistik Madrasah (NSM)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={nsm}
-                      onChange={(e) => setNsm(e.target.value)}
-                      placeholder="Contoh: 311235120145"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs md:text-sm font-mono shadow-2xs transition"
-                    />
-                  </div>
-
-                  <div className="pt-1">
-                    <div className="bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-200/60 flex items-start gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                      <p className="text-[11px] text-emerald-900 leading-relaxed">
-                        Data identitas ini akan dicetak otomatis pada Kop Surat RAB, Kwitansi SPJ, Buku Kas Pembantu (BKP), dan Buku Kas Umum (BKU).
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Card 2: Pejabat Penandatangan Dokumen SPJ */}
-            <div className="bg-white rounded-xl border border-slate-200/80 p-4 md:p-5 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-                <span className="p-1.5 bg-blue-50 text-blue-700 rounded-md">
-                  <User className="w-4 h-4" />
-                </span>
-                <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Pejabat Penandatangan Dokumen</h2>
-                  <p className="text-[11px] text-slate-500">Nama Kepala Madrasah dan Bendahara yang akan menandatangani SPJ dan lembar pengesahan.</p>
+                <div className="bg-emerald-50/70 p-2 rounded-lg border border-emerald-200/60 flex items-center gap-1.5 text-[10.5px] text-emerald-900">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span>Data identitas ini tercetak otomatis pada Kop Surat RAB, Kwitansi, BKP, &amp; BKU.</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Kolom Kepala Madrasah */}
-                <div className="bg-slate-50/60 p-3.5 rounded-xl border border-slate-200/60 space-y-2.5">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 border-b border-slate-200/60 pb-1.5">
-                    <User className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>Kepala Madrasah Diniyah</span>
+              {/* Card 2: Pejabat Penandatangan Dokumen */}
+              <div className="bg-white rounded-xl border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <span className="p-1 bg-blue-50 text-blue-700 rounded-md">
+                    <User className="w-3.5 h-3.5" />
+                  </span>
+                  <div>
+                    <h2 className="font-bold text-slate-800 text-xs">Pejabat Penandatangan SPJ</h2>
                   </div>
-                  
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-600 block">
-                      Nama Lengkap &amp; Gelar
+                    <label className="text-[10px] font-bold text-slate-600 block uppercase tracking-wider">
+                      Kepala Madrasah Diniyah
                     </label>
                     <input
                       type="text"
                       required
                       value={namaKepala}
                       onChange={(e) => setNamaKepala(e.target.value)}
-                      placeholder="Contoh: SARNI BASORI, S.Pd.I."
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs md:text-sm bg-white shadow-2xs"
+                      placeholder="Nama Lengkap &amp; Gelar"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs bg-slate-50/50 focus:bg-white font-medium"
                     />
                   </div>
-                </div>
 
-                {/* Kolom Bendahara Madrasah */}
-                <div className="bg-slate-50/60 p-3.5 rounded-xl border border-slate-200/60 space-y-2.5">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 border-b border-slate-200/60 pb-1.5">
-                    <User className="w-3.5 h-3.5 text-blue-700" />
-                    <span>Bendahara Madrasah Diniyah</span>
-                  </div>
-                  
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-600 block">
-                      Nama Lengkap &amp; Gelar
+                    <label className="text-[10px] font-bold text-slate-600 block uppercase tracking-wider">
+                      Bendahara Madrasah Diniyah
                     </label>
                     <input
                       type="text"
                       required
                       value={namaBendahara}
                       onChange={(e) => setNamaBendahara(e.target.value)}
-                      placeholder="Contoh: MAHMUDI, S.Pd.I."
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs md:text-sm bg-white shadow-2xs"
+                      placeholder="Nama Lengkap &amp; Gelar"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs bg-slate-50/50 focus:bg-white font-medium"
                     />
                   </div>
                 </div>
-
               </div>
+
             </div>
 
-            {/* Card 3: Detail Alamat Lembaga & Titimangsa */}
-            <div className="bg-white rounded-xl border border-slate-200/80 p-4 md:p-5 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
-                <span className="p-1.5 bg-amber-50 text-amber-700 rounded-md">
-                  <MapPin className="w-4 h-4" />
-                </span>
-                <div>
-                  <h2 className="font-bold text-slate-800 text-sm">Alamat Lembaga &amp; Titimangsa Surat</h2>
-                  <p className="text-[11px] text-slate-500">Rincian lokasi madrasah untuk baris kedua kop surat dan tempat penetapan dokumen.</p>
+            {/* ==================== KOLOM KANAN (7/12): ALAMAT & PENGESAHAN ==================== */}
+            <div className="lg:col-span-7 space-y-3">
+              
+              {/* Card 3: Alamat Lembaga */}
+              <div className="bg-white rounded-xl border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <span className="p-1 bg-amber-50 text-amber-700 rounded-md">
+                    <MapPin className="w-3.5 h-3.5" />
+                  </span>
+                  <div>
+                    <h2 className="font-bold text-slate-800 text-xs">Alamat &amp; Wilayah Lembaga</h2>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+                      Alamat Jalan / Dusun / RT &amp; RW
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={alamat}
+                      onChange={(e) => setAlamat(e.target.value)}
+                      placeholder="Contoh: Dusun Krajan RT 02 RW 01"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs bg-slate-50/50 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-600 block mb-1">
+                        Desa / Kelurahan
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={desa}
+                        onChange={(e) => setDesa(e.target.value)}
+                        placeholder="Contoh: Poncol"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs bg-slate-50/50 focus:bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-600 block mb-1">
+                        Kecamatan
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={kecamatan}
+                        onChange={(e) => setKecamatan(e.target.value)}
+                        placeholder="Contoh: Poncol"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs bg-slate-50/50 focus:bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-semibold text-slate-600 block mb-1">
+                        Kabupaten / Kota
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={kabupaten}
+                        onChange={(e) => setKabupaten(e.target.value)}
+                        placeholder="Contoh: Magetan"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs bg-slate-50/50 focus:bg-white"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {/* Alamat Jalan */}
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Alamat Jalan / Dusun / RT &amp; RW
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={alamat}
-                    onChange={(e) => setAlamat(e.target.value)}
-                    placeholder="Contoh: Dusun Krajan RT 02 RW 01"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs md:text-sm shadow-2xs transition"
-                  />
-                </div>
-
-                {/* Grid 3 Kolom Wilayah */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-600 block">
-                      Desa / Kelurahan
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={desa}
-                      onChange={(e) => setDesa(e.target.value)}
-                      placeholder="Contoh: Poncol"
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs md:text-sm shadow-2xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-600 block">
-                      Kecamatan
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={kecamatan}
-                      onChange={(e) => setKecamatan(e.target.value)}
-                      placeholder="Contoh: Poncol"
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs md:text-sm shadow-2xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-slate-600 block">
-                      Kabupaten / Kota
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={kabupaten}
-                      onChange={(e) => setKabupaten(e.target.value)}
-                      placeholder="Contoh: Magetan"
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs md:text-sm shadow-2xs"
-                    />
+              {/* Card 4: Titimangsa & Sumber Dana */}
+              <div className="bg-white rounded-xl border border-slate-200/80 p-3.5 shadow-2xs space-y-2.5">
+                <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <span className="p-1 bg-emerald-50 text-emerald-700 rounded-md">
+                    <Calendar className="w-3.5 h-3.5" />
+                  </span>
+                  <div>
+                    <h2 className="font-bold text-slate-800 text-xs">Titimangsa Dokumen &amp; Opsi Sumber Dana</h2>
                   </div>
                 </div>
 
-                {/* Titimangsa Tempat & Tanggal Dokumen */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-brand-green" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
                       Titimangsa Kota &amp; Tanggal Pengesahan
                     </label>
                     <input
@@ -691,25 +711,24 @@ export default function PengaturanView({
                       value={kotaTanggal}
                       onChange={(e) => setKotaTanggal(e.target.value)}
                       placeholder="Contoh: Magetan, 31 Desember 2025"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs md:text-sm shadow-2xs"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 focus:border-emerald-500 outline-none text-xs bg-slate-50/50 focus:bg-white"
                     />
-                    <p className="text-[10.5px] text-slate-400">
-                      Tercetak di pojok kanan bawah lembar cetak dokumen di atas nama Kepala Madrasah.
-                    </p>
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Tercetak di pojok kanan bawah dokumen SPJ.
+                    </span>
                   </div>
 
-                  {/* Sumber Dana Hibah Options (Ringkas & Bersih) */}
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
                       Opsi Sumber Dana Hibah
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       <input
                         type="text"
                         value={newSumberDana}
                         onChange={(e) => setNewSumberDana(e.target.value)}
-                        placeholder="Tambah kode sumber dana..."
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 outline-none text-xs focus:border-emerald-500 shadow-2xs"
+                        placeholder="Kode dana (mis: DAU)..."
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 outline-none text-xs focus:border-emerald-500"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -720,17 +739,18 @@ export default function PengaturanView({
                       <button
                         type="button"
                         onClick={handleAddSumberDana}
-                        className="bg-brand-green hover:bg-brand-green-dark text-white px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shadow-2xs shrink-0 flex items-center gap-1"
+                        className="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3 h-3" />
                         Tambah
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
+
+                    <div className="flex flex-wrap gap-1 mt-1.5">
                       {sumberDanaOptions.map((item) => (
                         <span 
                           key={item} 
-                          className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded text-xs font-mono font-medium"
+                          className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded text-[11px] font-mono font-medium"
                         >
                           {item}
                           <button
@@ -746,8 +766,8 @@ export default function PengaturanView({
                     </div>
                   </div>
                 </div>
-
               </div>
+
             </div>
 
           </div>
