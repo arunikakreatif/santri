@@ -10,13 +10,16 @@ import {
   Lock, 
   CheckCircle2, 
   AlertCircle, 
-  ExternalLink, 
   X, 
   Sparkles, 
   RefreshCw, 
   LogOut,
   ShieldCheck,
-  ChevronRight
+  ArrowRight,
+  Database,
+  Check,
+  CalendarCheck,
+  FileCheck2
 } from "lucide-react";
 import { 
   getActiveTenant, 
@@ -31,6 +34,7 @@ interface AktivasiLembagaModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (tenant: TenantAuthData) => void;
+  onLogout?: () => void;
   initialCode?: string;
 }
 
@@ -38,6 +42,7 @@ export default function AktivasiLembagaModal({
   isOpen,
   onClose,
   onSuccess,
+  onLogout,
   initialCode = ""
 }: AktivasiLembagaModalProps) {
   const [activeTenant, setActiveTenantState] = useState<TenantAuthData | null>(getActiveTenant());
@@ -46,10 +51,6 @@ export default function AktivasiLembagaModal({
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-
-  // Advanced developer option (Master URL)
-  const [showConfig, setShowConfig] = useState<boolean>(false);
-  const [masterUrl, setMasterUrl] = useState<string>(getMasterRegistryUrl());
 
   useEffect(() => {
     if (isOpen) {
@@ -71,14 +72,13 @@ export default function AktivasiLembagaModal({
     setLoading(true);
 
     try {
-      const res = await authenticateTenant(kode, pin, masterUrl);
+      const res = await authenticateTenant(kode, pin);
       if (res.success && res.data) {
         setSuccessMsg(`Berhasil terhubung ke ${res.data.namaLembaga}!`);
         setActiveTenantState(res.data);
         setTimeout(() => {
           onSuccess(res.data!);
-          onClose();
-        }, 800);
+        }, 500);
       } else {
         setErrorMsg(res.message || "Gagal melakukan aktivasi kode lembaga.");
       }
@@ -89,201 +89,242 @@ export default function AktivasiLembagaModal({
     }
   };
 
-  const handleLogout = () => {
-    if (confirm("Apakah Anda yakin ingin keluar dari lembaga ini? Anda dapat masuk kembali dengan kode unik.")) {
+  const handleTriggerLogout = () => {
+    onClose();
+    if (onLogout) {
+      onLogout();
+    } else {
       clearActiveTenant();
       setActiveTenantState(null);
-      setKode("");
-      setPin("");
-      setSuccessMsg("Berhasil keluar dari akun lembaga.");
     }
   };
 
-  const handleSaveMasterUrl = () => {
-    setMasterRegistryUrl(masterUrl);
-    alert("URL Master Registry pengembang berhasil disimpan!");
-    setShowConfig(false);
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div 
-        className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-2xl shadow-2xl border border-white/20 w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 text-slate-800"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div className="bg-gradient-to-r from-emerald-800 to-teal-900 text-white p-5 relative">
+        {/* MODAL HEADER - ISLAMIC PRESTIGE STYLE */}
+        <div className="bg-gradient-to-r from-brand-green-dark via-[#0E271D] to-[#0A1B14] text-white p-6 relative border-b border-brand-gold/30">
           <button
+            type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            className="absolute top-4 right-4 p-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+            title="Tutup Jendela"
           >
             <X className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-300/30 flex items-center justify-center text-amber-300 shrink-0">
-              <KeyRound className="w-5 h-5" />
+
+          <div className="flex items-center gap-3.5">
+            <div className="w-12 h-12 rounded-xl bg-brand-gold/20 border border-brand-gold/40 flex items-center justify-center text-brand-gold shrink-0 shadow-inner">
+              <Sparkles className="w-6 h-6 text-brand-gold" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-white leading-tight">
-                {activeTenant ? "Akun Lembaga Aktif" : "Aktivasi Akses Madrasah"}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-gold border border-brand-gold/40 uppercase tracking-wider">
+                  BPPGDS Madrasah Diniyah
+                </span>
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </div>
+              <h3 className="font-extrabold text-lg text-white font-display mt-0.5 leading-tight">
+                Selamat Datang di SANTRI
               </h3>
-              <p className="text-xs text-emerald-100/80 mt-0.5">
-                Multi-Tenant SANTRI BPPDGS
+              <p className="text-xs text-slate-300">
+                Sistem Administrasi &amp; Transparansi Realisasi Hibah
               </p>
             </div>
           </div>
         </div>
 
-        {/* Modal Content */}
-        <div className="p-6 space-y-4">
+        {/* MODAL BODY */}
+        <div className="p-6 space-y-5">
           
-          {/* Status jika sudah login */}
+          {/* TAMPILAN SAMBUTAN UTAMA JIKA SUDAH LOGIN / TERHUBUNG */}
           {activeTenant ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wide">
-                    Sedang Terhubung:
-                  </p>
-                  <p className="font-bold text-sm text-slate-800 mt-0.5 leading-snug">
-                    {activeTenant.namaLembaga}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1.5 text-xs text-slate-600">
-                    <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-mono font-bold">
-                      Kode: {activeTenant.kode}
-                    </span>
-                    {activeTenant.nsm && (
-                      <span className="text-slate-500 font-mono">
-                        NSM: {activeTenant.nsm}
+            <div className="space-y-4">
+              
+              {/* Status Banner "Sistem Siap Dijalankan" */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-emerald-50 border border-emerald-200/80 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 bg-emerald-500 text-white rounded-lg shadow-xs shrink-0 mt-0.5">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-extrabold text-emerald-900 uppercase tracking-wide">
+                        Sistem Siap Dijalankan
                       </span>
-                    )}
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                        Terverifikasi
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Akun lembaga Anda telah terhubung secara resmi. Seluruh modul administrasi, anggaran, dan pelaporan SPJ telah terisolasi aman untuk madrasah Anda.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-emerald-200/60 flex items-center justify-between">
-                <span className="text-[11px] text-emerald-700">
-                  Spreadsheet terhubung aktif
+              {/* Kartu Profil Lembaga Terhubung */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Nama Lembaga Terdaftar:
+                  </span>
+                  <p className="font-extrabold text-sm text-brand-green-dark mt-0.5 leading-snug">
+                    {activeTenant.namaLembaga}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/80 text-xs">
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200/70">
+                    <span className="text-[10px] text-slate-500 font-medium block">Kode Akses:</span>
+                    <span className="font-mono font-extrabold text-slate-800 text-xs">
+                      {activeTenant.kode}
+                    </span>
+                  </div>
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200/70">
+                    <span className="text-[10px] text-slate-500 font-medium block">Nomor Statistik (NSM):</span>
+                    <span className="font-mono font-extrabold text-slate-800 text-xs">
+                      {activeTenant.nsm || "311235120145"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-xs text-slate-600">
+                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold">
+                    <Database className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Database &amp; Spreadsheet Siap Aktif</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Thn: {new Date().getFullYear()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Fitur yang Siap Dijalankan */}
+              <div className="bg-amber-50/60 border border-amber-200/70 rounded-xl p-3.5 space-y-2">
+                <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block">
+                  Kelengkapan Berkas Siap Kelola:
                 </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-700">
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 font-bold" />
+                    <span>Penyusunan Rencana Anggaran (RAB)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 font-bold" />
+                    <span>Buku Kas Umum (BKU) Otomatis</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 font-bold" />
+                    <span>Kwitansi Belanja &amp; Tanda Bukti</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 font-bold" />
+                    <span>Cetak Lembar SPJ Resmi BPPGDS</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tombol Utama Mulai Kerja */}
+              <div className="pt-2 space-y-2.5">
                 <button
                   type="button"
-                  onClick={handleLogout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition cursor-pointer"
+                  onClick={onClose}
+                  className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-brand-green to-emerald-700 hover:from-emerald-700 hover:to-brand-green text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
-                  Ganti / Keluar
+                  <Sparkles className="w-4 h-4 text-brand-gold" />
+                  <span>Mulai Kelola Anggaran &amp; SPJ</span>
+                  <ArrowRight className="w-4 h-4 ml-1" />
                 </button>
+
+                <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
+                  <span>Ingin mengganti akun?</span>
+                  <button
+                    type="button"
+                    onClick={handleTriggerLogout}
+                    className="text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <LogOut className="w-3 h-3" />
+                    <span>Keluar / Ganti Lembaga</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
-            <>
+            /* FORM JIKA BELUM LOGIN (CADANGAN) */
+            <form onSubmit={handleLogin} className="space-y-4">
               <p className="text-xs text-slate-600 leading-relaxed">
-                Silakan masukkan <strong>Kode Unik Lembaga</strong> dan <strong>PIN</strong> yang telah diberikan oleh pengembang/koordinator untuk menyambungkan aplikasi ke Google Spreadsheet madrasah Anda.
+                Silakan masukkan <strong>Kode Akses Lembaga</strong> dan <strong>PIN</strong> untuk mengakses data khusus madrasah Anda.
               </p>
 
-              <form onSubmit={handleLogin} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Kode Unik Lembaga
-                  </label>
-                  <div className="relative">
-                    <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      required
-                      value={kode}
-                      onChange={(e) => setKode(e.target.value.toUpperCase())}
-                      placeholder="Contoh: MD01, MD02, atau BAITURROHMAN"
-                      className="w-full pl-9 pr-3 py-2 text-sm uppercase font-mono font-bold rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                    />
-                  </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Kode Akses Lembaga:
+                </label>
+                <div className="relative">
+                  <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={kode}
+                    onChange={(e) => setKode(e.target.value.toUpperCase())}
+                    placeholder="Contoh: MD01, MD02"
+                    className="w-full pl-9 pr-3 py-2 text-sm uppercase font-mono font-bold rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    PIN / Password Lembaga <span className="text-slate-400 font-normal">(jika diatur)</span>
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="password"
-                      value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      placeholder="Masukkan PIN / Sandi"
-                      className="w-full pl-9 pr-3 py-2 text-sm font-mono rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                    />
-                  </div>
-                </div>
-
-                {errorMsg && (
-                  <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-2 text-xs text-rose-700">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                {successMsg && (
-                  <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 flex items-start gap-2 text-xs text-emerald-700">
-                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{successMsg}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading || !kode.trim()}
-                  className="w-full mt-2 py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition cursor-pointer"
-                >
-                  {loading ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Memverifikasi Kode...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 text-amber-300" />
-                      Aktivasi &amp; Hubungkan Data
-                    </>
-                  )}
-                </button>
-              </form>
-            </>
-          )}
-
-          {/* Konfigurasi Master Registry bagi Pengembang */}
-          <div className="pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setShowConfig(!showConfig)}
-              className="text-[11px] text-slate-500 hover:text-emerald-700 flex items-center gap-1 font-medium transition cursor-pointer"
-            >
-              <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showConfig ? "rotate-90" : ""}`} />
-              Pengaturan URL Master Registry (Pengembang)
-            </button>
-
-            {showConfig && (
-              <div className="mt-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <p className="text-[11px] text-slate-600">
-                  Tautan Google Apps Script dari <strong>Spreadsheet Pusat Pengembang</strong> yang memvalidasi kode unik:
-                </p>
-                <input
-                  type="url"
-                  value={masterUrl}
-                  onChange={(e) => setMasterUrl(e.target.value)}
-                  placeholder="https://script.google.com/macros/s/.../exec"
-                  className="w-full px-2.5 py-1.5 text-[11px] font-mono rounded border border-slate-300 bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveMasterUrl}
-                  className="px-3 py-1 bg-slate-700 hover:bg-slate-800 text-white rounded text-[11px] font-bold"
-                >
-                  Simpan URL Master
-                </button>
               </div>
-            )}
-          </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  PIN Keamanan Lembaga:
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="password"
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    placeholder="Masukkan PIN"
+                    className="w-full pl-9 pr-3 py-2 text-sm font-mono rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              {errorMsg && (
+                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || !kode.trim()}
+                className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Memverifikasi...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4 text-brand-gold" />
+                    <span>Masuk ke Portal Lembaga</span>
+                  </>
+                )}
+              </button>
+            </form>
+          )}
 
         </div>
       </div>

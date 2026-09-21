@@ -119,6 +119,8 @@ export default function App() {
     setIsDevMode(isDev);
     setDeveloperSession(isDev);
     await loadAllData();
+    // Tampilkan notifikasi sambutan Selamat Datang di SANTRI & Sistem Siap Dijalankan
+    setShowAktivasiModal(true);
   };
 
   const handleLogout = () => {
@@ -567,11 +569,12 @@ export default function App() {
 
       </div>
 
-      {/* Modal Aktivasi Kode Lembaga (Multi-Tenant) */}
+      {/* Modal Sambutan & Status Lembaga (Multi-Tenant) */}
       <AktivasiLembagaModal
         isOpen={showAktivasiModal}
         onClose={() => setShowAktivasiModal(false)}
         onSuccess={handleTenantActivated}
+        onLogout={handleLogout}
         initialCode={initialTenantCode}
       />
 
