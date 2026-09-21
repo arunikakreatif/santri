@@ -85,30 +85,6 @@ export default function PortalLoginLembaga({
     }
   };
 
-  // Demo Login (Baiturrohman)
-  const handleQuickDemo = async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const res = await authenticateTenant("MD01", "1234");
-      if (res.success && res.data) {
-        onSuccess(res.data, false);
-      } else {
-        // Fallback demo
-        const demoTenant: TenantAuthData = {
-          kode: "MD01",
-          namaLembaga: 'MADRASAH DINIYAH "BAITURROHMAN"',
-          nsm: "311235120145",
-          appsScriptUrl: "",
-          authenticatedAt: new Date().toISOString()
-        };
-        onSuccess(demoTenant, false);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Login Super Admin / Pengembang
   const handleDevLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,8 +157,12 @@ export default function PortalLoginLembaga({
           
           {/* Card Header */}
           <div className="bg-gradient-to-r from-brand-green-dark to-[#0E241B] text-white p-6 text-center relative border-b border-brand-gold/20">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-gold/15 border border-brand-gold/30 text-brand-gold mb-3 shadow-inner">
-              <Building2 className="w-6 h-6" />
+            <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white shadow-md border border-brand-gold/40 mb-3">
+              <img
+                src="https://res.cloudinary.com/maswardi/image/upload/v1789741665/Screenshot_2026-09-18_211854_ja9rap.png"
+                alt="Logo SANTRI"
+                className="h-12 w-auto max-w-[50px] object-contain"
+              />
             </div>
             <h2 className="text-xl font-extrabold tracking-tight font-display text-white">
               Portal Masuk Lembaga
@@ -285,33 +265,11 @@ export default function PortalLoginLembaga({
               )}
             </button>
 
-            {/* Divider */}
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-white px-2 text-slate-400 font-semibold tracking-wider">
-                  Atau Akses Cepat
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Demo Button */}
-            <button
-              type="button"
-              onClick={handleQuickDemo}
-              disabled={loading}
-              className="w-full py-2 px-3 rounded-lg border border-slate-200 hover:border-brand-gold/50 bg-slate-50 hover:bg-emerald-50/50 text-slate-600 hover:text-brand-green-dark text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-brand-gold" />
-              <span>Coba Akun Percontohan (MD01 - Baiturrohman)</span>
-            </button>
           </form>
 
           {/* Card Footer Info */}
-          <div className="bg-slate-50 border-t border-slate-100 px-6 py-3 text-center text-[11px] text-slate-500">
-            Data madrasah terisolasi aman &bull; Tersinkronisasi ke Google Sheets masing-masing.
+          <div className="bg-slate-50 border-t border-slate-100 px-6 py-3.5 text-center text-xs font-semibold text-slate-600">
+            Kelola Administrasi Hibah Lebih Cepat, Tepat, dan Transparan
           </div>
         </div>
       </main>
