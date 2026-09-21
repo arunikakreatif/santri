@@ -560,20 +560,20 @@ export default function CetakPreview({
         const isFirst = itemIdx === 0;
         rowsHtml += `
           <tr>
-            <td style="border: 1px solid #000; padding: 4px 4px; text-align: center; font-size: 8.5pt; font-weight: ${isFirst ? "bold" : "normal"}; vertical-align: middle;">
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; font-weight: ${isFirst ? "bold" : "normal"}; vertical-align: top;">
               ${isFirst ? compNo : ""}
             </td>
-            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; font-weight: ${isFirst ? "500" : "normal"}; vertical-align: middle;">
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; font-weight: ${isFirst ? "500" : "normal"}; vertical-align: top;">
               ${isFirst ? compNama : ""}
             </td>
-            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;">
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;">
               ${item.uraian}
             </td>
-            <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 8.5pt; vertical-align: middle;">
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;">
               Tercapai
             </td>
-            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;"></td>
-            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;"></td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;"></td>
+            <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;"></td>
           </tr>
         `;
       });
@@ -676,6 +676,8 @@ export default function CetakPreview({
     table.data-table td {
       border: 1px solid #000;
       padding: 4px 6px;
+      vertical-align: top;
+      text-align: left;
     }
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; break-inside: avoid; }
@@ -769,7 +771,6 @@ export default function CetakPreview({
           <div class="signature-role">Mengetahui,</div>
           <div class="signature-madin">Kepala MD ${namaMadinLpp}</div>
           <div class="signature-name">${namaKepalaLpp}</div>
-          ${profil.nipKepala ? `<div class="signature-nip">NIP. ${profil.nipKepala}</div>` : ""}
         </div>
       </div>
     </div>
@@ -1223,20 +1224,20 @@ export default function CetakPreview({
                       const isFirst = itemIdx === 0;
                       return (
                         <tr key={`${compIdx}-${item.id || itemIdx}`}>
-                          <td className={`border border-black px-1.5 py-1 text-center ${isFirst ? "font-bold" : ""}`}>
+                          <td className={`border border-black px-2 py-1 align-top text-left ${isFirst ? "font-bold" : ""}`}>
                             {isFirst ? compNo : ""}
                           </td>
-                          <td className={`border border-black px-2 py-1 text-left ${isFirst ? "font-medium" : ""}`}>
+                          <td className={`border border-black px-2 py-1 align-top text-left ${isFirst ? "font-medium" : ""}`}>
                             {isFirst ? compNama : ""}
                           </td>
-                          <td className="border border-black px-2 py-1 text-left">
+                          <td className="border border-black px-2 py-1 align-top text-left">
                             {item.uraian}
                           </td>
-                          <td className="border border-black px-1.5 py-1 text-center">
+                          <td className="border border-black px-2 py-1 align-top text-left">
                             Tercapai
                           </td>
-                          <td className="border border-black px-2 py-1 text-left"></td>
-                          <td className="border border-black px-2 py-1 text-left"></td>
+                          <td className="border border-black px-2 py-1 align-top text-left"></td>
+                          <td className="border border-black px-2 py-1 align-top text-left"></td>
                         </tr>
                       );
                     });
@@ -1252,9 +1253,6 @@ export default function CetakPreview({
                 <div>Mengetahui,</div>
                 <div className="mb-14">Kepala MD {getCleanMadinName(profil.namaLembaga)}</div>
                 <div className="font-bold uppercase">{profil.namaKepala || "SARNI BASORI"}</div>
-                {profil.nipKepala && (
-                  <div className="text-[10px] text-slate-700">NIP. {profil.nipKepala}</div>
-                )}
               </div>
             </div>
           </div>

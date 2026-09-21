@@ -211,22 +211,22 @@ export default function LppTab({
 
           rowsHtml += `
             <tr>
-              <td style="border: 1px solid #000; padding: 4px 4px; text-align: center; font-size: 8.5pt; font-weight: ${isFirstItem ? "bold" : "normal"}; vertical-align: middle;">
+              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; font-weight: ${isFirstItem ? "bold" : "normal"}; vertical-align: top;">
                 ${noCellText}
               </td>
-              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; font-weight: ${isFirstItem ? "500" : "normal"}; vertical-align: middle;">
+              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; font-weight: ${isFirstItem ? "500" : "normal"}; vertical-align: top;">
                 ${compCellText}
               </td>
-              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;">
+              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;">
                 ${item.uraian}
               </td>
-              <td style="border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 8.5pt; vertical-align: middle;">
+              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;">
                 ${custom.hasil || "Tercapai"}
               </td>
-              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;">
+              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;">
                 ${custom.permasalahan || ""}
               </td>
-              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: middle;">
+              <td style="border: 1px solid #000; padding: 4px 6px; text-align: left; font-size: 8.5pt; vertical-align: top;">
                 ${custom.upaya || ""}
               </td>
             </tr>
@@ -339,6 +339,8 @@ export default function LppTab({
     table.data-table td {
       border: 1px solid #000;
       padding: 4px 6px;
+      vertical-align: top;
+      text-align: left;
     }
     thead {
       display: table-header-group;
@@ -458,7 +460,6 @@ export default function LppTab({
           <div class="signature-role">Mengetahui,</div>
           <div class="signature-madin">Kepala MD ${namaMadin}</div>
           <div class="signature-name">${namaKepala}</div>
-          ${profil.nipKepala ? `<div class="signature-nip">NIP. ${profil.nipKepala}</div>` : ""}
         </div>
       </div>
     </div>
@@ -694,16 +695,16 @@ export default function LppTab({
 
                   return (
                     <tr key={`${compIdx}-${item.id || itemIdx}`}>
-                      <td className={`border border-black px-1.5 py-1 text-center ${isFirstItem ? "font-bold" : ""}`}>
+                      <td className={`border border-black px-2 py-1 align-top text-left ${isFirstItem ? "font-bold" : ""}`}>
                         {isFirstItem ? compNo : ""}
                       </td>
-                      <td className={`border border-black px-2 py-1 text-left ${isFirstItem ? "font-medium" : ""}`}>
+                      <td className={`border border-black px-2 py-1 align-top text-left ${isFirstItem ? "font-medium" : ""}`}>
                         {isFirstItem ? compNama : ""}
                       </td>
-                      <td className="border border-black px-2 py-1 text-left">
+                      <td className="border border-black px-2 py-1 align-top text-left">
                         {item.uraian}
                       </td>
-                      <td className="border border-black px-1.5 py-1 text-center">
+                      <td className="border border-black px-2 py-1 align-top text-left">
                         {isEditingNotes ? (
                           <input
                             type="text"
@@ -717,13 +718,13 @@ export default function LppTab({
                                 }
                               });
                             }}
-                            className="w-full text-center text-xs p-0.5 border border-amber-300 rounded bg-amber-50/50"
+                            className="w-full text-left text-xs p-0.5 border border-amber-300 rounded bg-amber-50/50"
                           />
                         ) : (
                           custom.hasil || "Tercapai"
                         )}
                       </td>
-                      <td className="border border-black px-2 py-1 text-left">
+                      <td className="border border-black px-2 py-1 align-top text-left">
                         {isEditingNotes ? (
                           <input
                             type="text"
@@ -738,13 +739,13 @@ export default function LppTab({
                               });
                             }}
                             placeholder="Isi jika ada..."
-                            className="w-full text-xs p-0.5 border border-amber-300 rounded bg-amber-50/50"
+                            className="w-full text-left text-xs p-0.5 border border-amber-300 rounded bg-amber-50/50"
                           />
                         ) : (
                           custom.permasalahan || ""
                         )}
                       </td>
-                      <td className="border border-black px-2 py-1 text-left">
+                      <td className="border border-black px-2 py-1 align-top text-left">
                         {isEditingNotes ? (
                           <input
                             type="text"
@@ -759,7 +760,7 @@ export default function LppTab({
                               });
                             }}
                             placeholder="Isi jika ada..."
-                            className="w-full text-xs p-0.5 border border-amber-300 rounded bg-amber-50/50"
+                            className="w-full text-left text-xs p-0.5 border border-amber-300 rounded bg-amber-50/50"
                           />
                         ) : (
                           custom.upaya || ""
@@ -779,9 +780,6 @@ export default function LppTab({
               <div>Mengetahui,</div>
               <div className="mb-14">Kepala MD {namaMadin}</div>
               <div className="font-bold uppercase underline-offset-2">{namaKepala}</div>
-              {profil.nipKepala && (
-                <div className="text-[10px] text-slate-700">NIP. {profil.nipKepala}</div>
-              )}
             </div>
           </div>
         </div>
