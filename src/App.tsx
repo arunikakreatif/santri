@@ -18,7 +18,10 @@ import {
   RefreshCw,
   Clock,
   ShoppingBag,
-  KeyRound
+  KeyRound,
+  ShieldCheck,
+  LogOut,
+  Building2
 } from "lucide-react";
 
 import { ProfilLembaga, RABData } from "./types";
@@ -40,7 +43,14 @@ import CetakPreview from "./components/CetakPreview";
 import MenuBelanjaView from "./components/belanja/MenuBelanjaView";
 import MadinSelector from "./components/belanja/MadinSelector";
 import AktivasiLembagaModal from "./components/AktivasiLembagaModal";
-import { getActiveTenant, ActiveTenant } from "./services/tenantService";
+import PortalLoginLembaga from "./components/PortalLoginLembaga";
+import { 
+  getActiveTenant, 
+  ActiveTenant, 
+  clearActiveTenant, 
+  isDeveloperSession, 
+  setDeveloperSession 
+} from "./services/tenantService";
 
 function DomeIcon({ className = "w-6 h-6", color = "currentColor" }: { className?: string; color?: string }) {
   return (
@@ -67,6 +77,7 @@ export default function App() {
 
   // Multi-Tenant Session State
   const [activeTenant, setActiveTenant] = useState<ActiveTenant | null>(getActiveTenant());
+  const [isDevMode, setIsDevMode] = useState<boolean>(isDeveloperSession());
   const [showAktivasiModal, setShowAktivasiModal] = useState<boolean>(false);
   const [initialTenantCode, setInitialTenantCode] = useState<string>("");
 
@@ -80,6 +91,7 @@ export default function App() {
       setRabList(r);
       setSheetsConnected(isSheetsConnected());
       setActiveTenant(getActiveTenant());
+      setIsDevMode(isDeveloperSession());
     } catch (e) {
       console.error("Gagal memuat data awal:", e);
     } finally {
@@ -92,7 +104,7 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const kode = params.get("kode");
     if (kode) {
-      setInitialTenantCode(kode);
+      setInitialTenantCode(kode.toUpperCase());
       const current = getActiveTenant();
       if (!current || current.kode !== kode.toUpperCase()) {
         setShowAktivasiModal(true);
@@ -101,9 +113,21 @@ export default function App() {
     loadAllData();
   }, []);
 
-  const handleTenantActivated = async (tenant: ActiveTenant) => {
+  const handleTenantActivated = async (tenant: ActiveTenant, isDev: boolean = false) => {
     setActiveTenant(tenant);
+    setIsDevMode(isDev);
+    setDeveloperSession(isDev);
     await loadAllData();
+  };
+
+  const handleLogout = () => {
+    if (confirm("Apakah Anda yakin ingin keluar dari akun lembaga ini? Anda dapat masuk kembali dengan Kode Lembaga & PIN.")) {
+      clearActiveTenant();
+      setActiveTenant(null);
+      setIsDevMode(false);
+      setDeveloperSession(false);
+      setRabList([]);
+    }
   };
 
   // Navigation Controller
@@ -255,6 +279,7 @@ export default function App() {
             profil={profil}
             onSaveProfil={handleSaveProfil}
             onRefreshAllData={loadAllData}
+            isDeveloper={isDevMode || activeTenant?.kode === "ADMIN-MASTER"}
           />
         );
       case "cetak":
@@ -295,12 +320,22 @@ export default function App() {
   ];
 
   // Loading spinner overlay
-  if (loading && !profil) {
+  if (loading && !profil && (activeTenant || isDevMode)) {
     return (
       <div className="fixed inset-0 bg-brand-krem flex flex-col items-center justify-center gap-3 text-sm font-semibold text-brand-green-dark">
         <RefreshCw className="w-8 h-8 text-brand-gold animate-spin" />
-        Memuat Portal RAB Madrasah Diniyah...
+        Memuat Portal SANTRI BPPGDS...
       </div>
+    );
+  }
+
+  // Multi-Tenant Gatekeeper: Jangan tampilkan dashboard jika belum login!
+  if (!activeTenant && !isDevMode) {
+    return (
+      <PortalLoginLembaga
+        onSuccess={handleTenantActivated}
+        initialCode={initialTenantCode}
+      />
     );
   }
 
@@ -332,42 +367,40 @@ export default function App() {
             </div>
           </div>
 
-          {/* Connected sheet name or local state with golden brand styling for offline */}
-          <div className={`flex items-center gap-1.5 border px-2.5 py-1.5 rounded-lg text-[10px] font-bold ${
-            sheetsConnected 
-              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-              : "bg-brand-gold/10 text-brand-gold border-brand-gold/30"
-          }`}>
-            <Database className={`w-3.5 h-3.5 shrink-0 ${sheetsConnected ? "text-emerald-400" : "text-brand-gold"}`} />
-            <span className="truncate">
-              {sheetsConnected ? "Sheets Terhubung" : "Mode Offline (Lokal)"}
-            </span>
-          </div>
-
-          {/* Multi-Tenant Access Key Button */}
-          <button
-            type="button"
-            onClick={() => setShowAktivasiModal(true)}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-white/5 hover:bg-white/10 text-brand-gold border border-brand-gold/25 transition cursor-pointer"
-            title="Aktivasi atau ganti kode akses madrasah"
-          >
-            <span className="flex items-center gap-1.5 truncate">
-              <KeyRound className="w-3.5 h-3.5 shrink-0 text-brand-gold" />
-              <span className="truncate">
-                {activeTenant ? `Akses: ${activeTenant.kode}` : "Aktivasi Kode Lembaga"}
+          {/* Kartu Identitas Lembaga Terverifikasi */}
+          <div className="p-3 bg-white/5 rounded-xl border border-white/10 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-gold flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{isDevMode ? "Mode Pengembang" : `Kode: ${activeTenant?.kode}`}</span>
               </span>
-            </span>
-            <span className="text-[9px] bg-brand-gold/20 text-brand-gold px-1.5 py-0.5 rounded font-bold uppercase">
-              {activeTenant ? "Ganti" : "Login"}
-            </span>
-          </button>
-
-          {/* Multi-Tenant Madin Selector */}
-          {profil && (
-            <div className="pt-1">
-              <MadinSelector currentMadin={profil} onMadinChanged={handleMadinChanged} />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-[10px] text-rose-300 hover:text-rose-100 flex items-center gap-1 hover:underline cursor-pointer bg-white/5 hover:bg-rose-500/20 px-2 py-0.5 rounded transition"
+                title="Keluar dari akun lembaga ini"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>Keluar</span>
+              </button>
             </div>
-          )}
+
+            <div className="font-bold text-xs text-white leading-snug line-clamp-2" title={activeTenant?.namaLembaga || profil?.namaLembaga}>
+              {activeTenant?.namaLembaga || profil?.namaLembaga}
+            </div>
+
+            {/* Connected sheet status */}
+            <div className={`flex items-center gap-1.5 border px-2 py-1 rounded-md text-[10px] font-bold ${
+              sheetsConnected 
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                : "bg-brand-gold/10 text-brand-gold border-brand-gold/30"
+            }`}>
+              <Database className={`w-3 h-3 shrink-0 ${sheetsConnected ? "text-emerald-400" : "text-brand-gold"}`} />
+              <span className="truncate">
+                {sheetsConnected ? "Sheets Cloud Terhubung" : "Mode Offline (Lokal)"}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Menu list */}
@@ -394,12 +427,20 @@ export default function App() {
 
         {/* Footer info */}
         <div className="p-4 border-t border-white/5 space-y-2 text-[10px] text-slate-400">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold text-rose-300 hover:text-white hover:bg-rose-900/40 border border-rose-500/30 transition cursor-pointer mb-2"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar / Ganti Lembaga</span>
+          </button>
           <div className="flex items-center gap-1.5 font-medium">
             <Clock className="w-3.5 h-3.5 text-brand-gold" />
             <span>Thn Ajaran Berjalan: {new Date().getFullYear()}</span>
           </div>
           <p className="text-[9px] text-slate-500 font-medium">
-            SANTRI &copy; {new Date().getFullYear()} — BPPDGS Madrasah Diniyah
+            SANTRI &copy; {new Date().getFullYear()} — BPPGDS Madrasah Diniyah
           </p>
         </div>
       </aside>
@@ -431,12 +472,18 @@ export default function App() {
           </button>
         </header>
 
-        {/* Mobile Madin Selector Bar */}
-        {profil && (
-          <div className="px-4 py-2.5 bg-brand-green-dark border-b border-brand-gold/10 lg:hidden print:hidden">
-            <MadinSelector currentMadin={profil} onMadinChanged={handleMadinChanged} />
+        {/* Mobile Lembaga Identity Bar */}
+        <div className="px-4 py-2 bg-brand-green-dark/95 border-b border-brand-gold/10 lg:hidden print:hidden flex items-center justify-between text-xs text-white">
+          <div className="flex items-center gap-1.5 min-w-0 pr-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-brand-gold shrink-0" />
+            <span className="font-bold truncate text-[11px]">
+              {activeTenant?.namaLembaga || profil?.namaLembaga}
+            </span>
           </div>
-        )}
+          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold shrink-0 border border-brand-gold/30">
+            {activeTenant?.kode || "DEV"}
+          </span>
+        </div>
 
         {/* Mobile menu panel dropdown */}
         {mobileMenuOpen && (
@@ -459,21 +506,29 @@ export default function App() {
                 </button>
               );
             })}
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                setShowAktivasiModal(true);
-              }}
-              className="w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-xs font-bold bg-brand-gold/15 text-brand-gold border border-brand-gold/25 transition cursor-pointer mt-1"
-            >
-              <span className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-brand-gold" />
-                <span>{activeTenant ? `Akses: ${activeTenant.kode} (${activeTenant.namaLembaga})` : "Aktivasi Kode Lembaga"}</span>
-              </span>
-              <span className="text-[9px] bg-brand-gold/20 text-brand-gold px-1.5 py-0.5 rounded uppercase font-bold">
-                {activeTenant ? "Ganti" : "Login"}
-              </span>
-            </button>
+
+            <div className="p-3 bg-white/5 rounded-lg border border-white/10 space-y-2 mt-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-brand-gold font-bold flex items-center gap-1 text-[11px]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isDevMode ? "Mode Pengembang" : `Kode: ${activeTenant?.kode}`}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="text-rose-300 hover:text-rose-100 font-bold flex items-center gap-1 text-[11px] bg-rose-950/40 px-2 py-0.5 rounded border border-rose-500/30 cursor-pointer"
+                >
+                  <LogOut className="w-3 h-3" />
+                  <span>Keluar</span>
+                </button>
+              </div>
+              <div className="text-xs font-bold text-white leading-tight line-clamp-2">
+                {activeTenant?.namaLembaga || profil?.namaLembaga}
+              </div>
+            </div>
 
             <div className="border-t border-white/5 mt-2 pt-2 flex items-center justify-between text-[9px] text-slate-400">
               <span className={`font-bold ${sheetsConnected ? "text-emerald-400" : "text-brand-gold"}`}>

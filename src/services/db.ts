@@ -303,7 +303,7 @@ export const isValidAppsScriptUrl = (rawUrl: string): boolean => {
 };
 
 export const getAppsScriptUrl = (): string => {
-  const raw = localStorage.getItem("rab_apps_script_url") || "";
+  const raw = localStorage.getItem("rab_apps_script_url") || (import.meta.env?.VITE_APPS_SCRIPT_URL as string) || "";
   return normalizeAppsScriptUrl(raw);
 };
 
@@ -323,7 +323,7 @@ export const setAppsScriptUrl = (url: string) => {
 };
 
 export const isSheetsConnected = (): boolean => {
-  const raw = localStorage.getItem("rab_apps_script_url") || "";
+  const raw = localStorage.getItem("rab_apps_script_url") || (import.meta.env?.VITE_APPS_SCRIPT_URL as string) || "";
   return isValidAppsScriptUrl(raw);
 };
 

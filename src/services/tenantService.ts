@@ -19,12 +19,31 @@ export type ActiveTenant = TenantAuthData;
 
 const STORAGE_KEY_TENANT = "santri_active_tenant";
 const STORAGE_KEY_MASTER_URL = "santri_master_registry_url";
+const STORAGE_KEY_DEV_MODE = "santri_developer_mode";
+
+/**
+ * Memeriksa apakah pengguna login sebagai Pengembang / Super Admin
+ */
+export const isDeveloperSession = (): boolean => {
+  return sessionStorage.getItem(STORAGE_KEY_DEV_MODE) === "true";
+};
+
+export const setDeveloperSession = (isDev: boolean): void => {
+  if (isDev) {
+    sessionStorage.setItem(STORAGE_KEY_DEV_MODE, "true");
+  } else {
+    sessionStorage.removeItem(STORAGE_KEY_DEV_MODE);
+  }
+};
 
 /**
  * Mendapatkan URL Google Apps Script Master Registry
  */
 export const getMasterRegistryUrl = (): string => {
-  return localStorage.getItem(STORAGE_KEY_MASTER_URL) || "";
+  const stored = localStorage.getItem(STORAGE_KEY_MASTER_URL);
+  if (stored && stored.trim()) return stored.trim();
+  const envUrl = (import.meta.env?.VITE_MASTER_REGISTRY_URL as string) || "";
+  return envUrl.trim();
 };
 
 /**
@@ -70,7 +89,7 @@ export const setActiveTenant = (tenant: TenantAuthData): void => {
  */
 export const clearActiveTenant = (): void => {
   localStorage.removeItem(STORAGE_KEY_TENANT);
-  // Optional: URL Apps Script madrasah dibersihkan agar aman saat ganti akun
+  sessionStorage.removeItem(STORAGE_KEY_DEV_MODE);
   localStorage.removeItem("rab_apps_script_url");
 };
 
@@ -91,6 +110,9 @@ export const authenticateTenant = async (
 
   const masterUrl = (overrideMasterUrl || getMasterRegistryUrl()).trim();
 
+  // Target madin ID terisolasi berdasarkan kode lembaga (misal: "madin-md01", "madin-md02")
+  const targetMadinId = cleanKode === "MD01" ? "madin-baiturrohman" : `madin-${cleanKode.toLowerCase()}`;
+
   // Jika URL Master Registry sudah disetel oleh pengembang di sistem:
   if (masterUrl) {
     try {
@@ -108,31 +130,39 @@ export const authenticateTenant = async (
         kode: resData.data.kode,
         namaLembaga: resData.data.namaLembaga || `MADRASAH DINIYAH ${cleanKode}`,
         nsm: resData.data.nsm || "",
-        appsScriptUrl: resData.data.appsScriptUrl,
+        appsScriptUrl: resData.data.appsScriptUrl || "",
         authenticatedAt: new Date().toISOString()
       };
 
       // Simpan session tenant & sambungkan otomatis ke spreadsheet madrasah
       setActiveTenant(tenantInfo);
-      setAppsScriptUrl(tenantInfo.appsScriptUrl);
+      if (tenantInfo.appsScriptUrl) {
+        setAppsScriptUrl(tenantInfo.appsScriptUrl);
+      }
 
-      // Cari atau buat profil madin lokal yang sesuai
+      // Cari atau buat profil madin lokal yang terisolasi untuk lembaga ini
       const list = getMadinList();
-      let matched = list.find(m => m.nsm === tenantInfo.nsm || m.namaLembaga.toLowerCase() === tenantInfo.namaLembaga.toLowerCase());
+      let matched = list.find(m => m.id === targetMadinId || (tenantInfo.nsm && m.nsm === tenantInfo.nsm));
       if (matched) {
-        setActiveMadinId(matched.id || "madin-baiturrohman");
+        // Update nama dan NSM jika berbeda
+        matched.namaLembaga = tenantInfo.namaLembaga;
+        if (tenantInfo.nsm) matched.nsm = tenantInfo.nsm;
+        setActiveMadinId(matched.id || targetMadinId);
       } else {
         const created = await createMadin({
+          id: targetMadinId,
           namaLembaga: tenantInfo.namaLembaga,
           nsm: tenantInfo.nsm || "311235120000"
         });
-        setActiveMadinId(created.id || "madin-baiturrohman");
+        setActiveMadinId(created.id || targetMadinId);
       }
 
-      // Tarik data awal dari sheet madrasah
-      try {
-        await syncAllDataFromSheets();
-      } catch (err) {}
+      // Tarik data awal dari sheet madrasah jika url tersedia
+      if (tenantInfo.appsScriptUrl) {
+        try {
+          await syncAllDataFromSheets();
+        } catch (err) {}
+      }
 
       return { success: true, message: "Aktivasi lembaga berhasil!", data: tenantInfo };
     } catch (e: any) {
@@ -144,12 +174,14 @@ export const authenticateTenant = async (
   // Memungkinkan memasukkan kode dan langsung login lokal
   const tenantInfo: TenantAuthData = {
     kode: cleanKode,
-    namaLembaga: `MADRASAH DINIYAH ${cleanKode}`,
+    namaLembaga: cleanKode === "MD01" ? 'MADRASAH DINIYAH "BAITURROHMAN"' : `MADRASAH DINIYAH ${cleanKode}`,
     appsScriptUrl: "",
     authenticatedAt: new Date().toISOString()
   };
 
   setActiveTenant(tenantInfo);
+  setActiveMadinId(targetMadinId);
+
   return { 
     success: true, 
     message: "Masuk dengan kode lembaga lokal.", 

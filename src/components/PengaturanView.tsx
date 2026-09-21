@@ -49,15 +49,18 @@ interface PengaturanViewProps {
   profil: ProfilLembaga;
   onSaveProfil: (profil: ProfilLembaga) => Promise<boolean>;
   onRefreshAllData: () => Promise<void>;
+  isDeveloper?: boolean;
 }
 
 export default function PengaturanView({ 
   profil, 
   onSaveProfil,
-  onRefreshAllData
+  onRefreshAllData,
+  isDeveloper = false
 }: PengaturanViewProps) {
   // Navigation tab: 'profil' | 'database' | 'multitenant'
   const [activeTab, setActiveTab] = useState<"profil" | "database" | "multitenant">("profil");
+  const [unlockedDevTab, setUnlockedDevTab] = useState<boolean>(isDeveloper);
 
   // Local state for profile form
   const [namaLembaga, setNamaLembaga] = useState(profil.namaLembaga);
@@ -364,20 +367,43 @@ export default function PengaturanView({
           <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500" : "bg-amber-400"}`} />
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("multitenant")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap ${
-            activeTab === "multitenant"
-              ? "border-brand-green text-brand-green bg-emerald-50/40"
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>Master Multi-Tenant (Pengembang)</span>
-          {masterUrl && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-        </button>
+        {unlockedDevTab && (
+          <button
+            type="button"
+            onClick={() => setActiveTab("multitenant")}
+            className={`flex items-center gap-2 px-4 py-2.5 text-xs md:text-sm font-bold border-b-2 transition cursor-pointer whitespace-nowrap ${
+              activeTab === "multitenant"
+                ? "border-brand-green text-brand-green bg-emerald-50/40"
+                : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+            }`}
+          >
+            <Layers className="w-4 h-4 text-indigo-600" />
+            <span>Master Multi-Tenant (Pengembang)</span>
+            {masterUrl && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
+          </button>
+        )}
       </div>
+
+      {!unlockedDevTab && (
+        <div className="flex justify-end pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              const pass = prompt("Masukkan PIN Pengembang / Super Admin (Default: 9999):");
+              if (pass === "9999" || pass?.toLowerCase() === "admin") {
+                setUnlockedDevTab(true);
+                setActiveTab("multitenant");
+              } else if (pass !== null) {
+                alert("PIN Pengembang salah.");
+              }
+            }}
+            className="text-[11px] text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition cursor-pointer"
+          >
+            <Layers className="w-3 h-3" />
+            <span>Mode Pengembang Master Registry</span>
+          </button>
+        </div>
+      )}
 
       {/* Sync Feedback Toast */}
       {syncMessage && (
@@ -1162,10 +1188,21 @@ export default function PengaturanView({
                   <strong>Export / Push ke Repository GitHub:</strong> Buka menu Settings di Google AI Studio &gt; <em>Export to GitHub</em> (atau download ZIP, ekstrak, lalu <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">git push origin main</code> ke repository GitHub Anda).
                 </li>
                 <li>
-                  <strong>Hubungkan ke Vercel:</strong> Buka <a href="https://vercel.com" target="_blank" rel="noreferrer" className="text-indigo-600 underline font-semibold">vercel.com</a>, pilih <strong>Add New Project</strong> &gt; Pilih repository GitHub Anda &gt; Klik <strong>Deploy</strong>. Vercel akan otomatis mengenali Vite dan file <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">vercel.json</code> yang telah terkonfigurasi.
+                  <strong>Hubungkan ke Vercel:</strong> Buka <a href="https://vercel.com" target="_blank" rel="noreferrer" className="text-indigo-600 underline font-semibold">vercel.com</a>, pilih <strong>Add New Project</strong> &gt; Pilih repository GitHub Anda.
                 </li>
                 <li>
-                  <strong>Bagikan Tautan ke Madrasah:</strong> Setelah Vercel memberikan domain (misal: <code className="font-mono text-emerald-800 font-semibold bg-emerald-50 px-1 py-0.5 rounded">https://madin-bppdgs.vercel.app</code>), Anda dapat membagikan link tersebut beserta Kode Unik dan PIN masing-masing madrasah, atau link langsung: <br />
+                  <strong>Isi Environment Variables di Vercel:</strong> Buka bagian <strong>Environment Variables</strong> di halaman konfigurasi Vercel:
+                  <div className="mt-1.5 p-2.5 bg-slate-50 border border-slate-200 rounded-md font-mono text-[11px] space-y-1">
+                    <p className="text-slate-500 font-sans text-xs font-semibold">Tambahkan variabel berikut (Key dan Value):</p>
+                    <p><span className="text-emerald-700 font-bold">Key:</span> VITE_MASTER_REGISTRY_URL</p>
+                    <p><span className="text-indigo-700 font-bold">Value:</span> {masterUrl || "https://script.google.com/macros/s/.../exec"}</p>
+                  </div>
+                  <span className="text-[11px] text-slate-500 block mt-1">
+                    Dengan memasukkan variabel ini di Vercel, seluruh madrasah yang membuka website Anda akan langsung terhubung ke Master Registry pengembang secara otomatis tanpa perlu input manual.
+                  </span>
+                </li>
+                <li>
+                  <strong>Klik Deploy &amp; Bagikan Tautan ke Madrasah:</strong> Klik tombol <strong>Deploy</strong>. Setelah Vercel memberikan domain (misal: <code className="font-mono text-emerald-800 font-semibold bg-emerald-50 px-1 py-0.5 rounded">https://madin-bppdgs.vercel.app</code>), Anda dapat membagikan link tersebut beserta Kode Unik dan PIN masing-masing madrasah, atau link langsung: <br />
                   <code className="font-mono text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded text-[11px] block mt-1">
                     https://madin-bppdgs.vercel.app?kode=MD01
                   </code>
