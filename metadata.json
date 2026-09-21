@@ -1,0 +1,6 @@
+{
+  "name": "SANTRI",
+  "description": "SANTRI (Sistem Administrasi & Transparansi Realisasi Hibah) adalah platform manajemen keuangan terpadu untuk pengelolaan Dana Hibah BPPDGS Madrasah Diniyah. Tingkatkan efisiensi dan akurasi penyusunan laporan pertanggungjawaban (SPJ) Anda melalui ekosistem digital yang praktis dan profesional.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

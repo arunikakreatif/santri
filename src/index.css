@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Premium Islamic Institution Color Palette */
+  --color-brand-green: #0F3D2E;
+  --color-brand-green-dark: #09261D;
+  --color-brand-green-light: #16523F;
+  --color-brand-green-pale: #EBF2EF;
+  --color-brand-gold: #C9A24B;
+  --color-brand-gold-muted: #B38F3B;
+  --color-brand-gold-light: #F4EAD4;
+  --color-brand-gold-pale: #FAF5EA;
+  --color-brand-krem: #FAF7F0;
+}
+
+/* Custom Watermark Star Pattern */
+.bg-islamic-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg stroke='%23C9A24B' stroke-width='0.5' stroke-opacity='0.08' fill='none'%3E%3Cpath d='M40 0 L40 80 M0 40 L80 40 M0 0 L80 80 M0 80 L80 0'/%3E%3Cpolygon points='40,25 50,40 40,55 30,40'/%3E%3Cpolygon points='30,30 50,30 50,50 30,50' transform='rotate(45 40 40)'/%3E%3Cpolygon points='40,10 61,40 40,70 19,40'/%3E%3Cpolygon points='19,19 61,19 61,61 19,61' transform='rotate(45 40 40)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Base style to apply krem color globally across the application, with fallback */
+body {
+  background-color: #FAF7F0;
+}
+
+/* Print Rules for Financial Official Documents (BKP, BKU, Kwitansi) */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0; /* Menghilangkan header (tanggal, jam, judul) dan footer bawaan browser */
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide app navigation, sidebar, header, and backdrop */
+  aside, header, nav, footer, .print\\:hidden, [role="navigation"] {
+    display: none !important;
+  }
+
+  /* Make printable modal container take over the whole page cleanly */
+  .modal-print-backdrop {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    inset: auto !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .modal-print-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .dokumen-cetak-resmi {
+    padding: 16mm 18mm 12mm 18mm !important;
+    box-sizing: border-box !important;
+    min-height: 297mm !important;
+    position: relative !important;
+  }
+
+  .dokumen-cetak-landscape {
+    padding: 10mm 15mm 8mm 15mm !important;
+    box-sizing: border-box !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    max-width: 297mm !important;
+    max-height: 210mm !important;
+    min-height: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .dokumen-cetak-resmi,
+  .dokumen-cetak-resmi * {
+    color: #000000 !important;
+    text-shadow: none !important;
+  }
+
+  .dokumen-cetak-resmi table,
+  .dokumen-cetak-resmi th,
+  .dokumen-cetak-resmi td {
+    border-color: #000000 !important;
+    color: #000000 !important;
+  }
+
+  .dokumen-cetak-resmi tr {
+    border-color: #000000 !important;
+  }
+}
