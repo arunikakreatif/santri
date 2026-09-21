@@ -25,14 +25,16 @@ const STORAGE_KEY_DEV_MODE = "santri_developer_mode";
  * Memeriksa apakah pengguna login sebagai Pengembang / Super Admin
  */
 export const isDeveloperSession = (): boolean => {
-  return sessionStorage.getItem(STORAGE_KEY_DEV_MODE) === "true";
+  return sessionStorage.getItem(STORAGE_KEY_DEV_MODE) === "true" || localStorage.getItem(STORAGE_KEY_DEV_MODE) === "true";
 };
 
 export const setDeveloperSession = (isDev: boolean): void => {
   if (isDev) {
     sessionStorage.setItem(STORAGE_KEY_DEV_MODE, "true");
+    localStorage.setItem(STORAGE_KEY_DEV_MODE, "true");
   } else {
     sessionStorage.removeItem(STORAGE_KEY_DEV_MODE);
+    localStorage.removeItem(STORAGE_KEY_DEV_MODE);
   }
 };
 
@@ -90,6 +92,7 @@ export const setActiveTenant = (tenant: TenantAuthData): void => {
 export const clearActiveTenant = (): void => {
   localStorage.removeItem(STORAGE_KEY_TENANT);
   sessionStorage.removeItem(STORAGE_KEY_DEV_MODE);
+  localStorage.removeItem(STORAGE_KEY_DEV_MODE);
   localStorage.removeItem("rab_apps_script_url");
 };
 
